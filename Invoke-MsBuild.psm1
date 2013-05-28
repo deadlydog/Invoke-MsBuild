@@ -1,6 +1,6 @@
 function Invoke-MsBuild
 {
-<#
+	<#
 	.SYNOPSIS
 	Builds the given Visual Studio solution or project file using MSBuild.
 	
@@ -15,7 +15,8 @@ function Invoke-MsBuild
 	.PARAMETER MsBuildParameters
 	Additional parameters to pass to the MsBuild command-line tool. This can be any valid MsBuild command-line parameters except for the path of 
 	the solution/project to build.
-	http://msdn.microsoft.com/en-ca/library/vstudio/ms164311.aspx
+	
+	See http://msdn.microsoft.com/en-ca/library/vstudio/ms164311.aspx for valid MsBuild command-line parameters.
 	
 	.PARAMETER $BuildLogDirectoryPath
 	The directory path to write the build log file to.
@@ -107,6 +108,9 @@ function Invoke-MsBuild
 	In this example the returned log path might be "C:\BuildLogs\MyProject.msbuild.log".
 	If the BuildLogDirectoryPath was not provided, the returned log path might be "C:\Some Folder\MyProject.msbuild.log".
 	
+	.LINK
+	Project home: https://invokemsbuild.codeplex.com
+	
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
@@ -152,119 +156,119 @@ function Invoke-MsBuild
 
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
-		
+
 		[parameter(Mandatory=$false)]
 		[Alias("Get")]
 		[Alias("G")]
 		[switch] $GetLogPath
 	)
 
-    BEGIN { }
-    END { }
-    PROCESS
-    {
-	    # Turn on Strict Mode to help catch syntax-related errors.
-	    # 	This must come after a script's/function's param section.
-	    # 	Forces a function to be the first non-comment code to appear in a PowerShell Script/Module.
-	    Set-StrictMode -Version Latest
+	BEGIN { }
+	END { }
+	PROCESS
+	{
+		# Turn on Strict Mode to help catch syntax-related errors.
+		# 	This must come after a script's/function's param section.
+		# 	Forces a function to be the first non-comment code to appear in a PowerShell Script/Module.
+		Set-StrictMode -Version Latest
 
-	    # If the keyword was supplied, place the log in the same folder as the solution/project being built.
-	    if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
-	    {
-		    $BuildLogDirectoryPath = [System.IO.Path]::GetDirectoryName($Path)
-	    }
+		# If the keyword was supplied, place the log in the same folder as the solution/project being built.
+		if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
+		{
+			$BuildLogDirectoryPath = [System.IO.Path]::GetDirectoryName($Path)
+		}
 
-	    # Store the VS Command Prompt to do the build in, if one exists.
-	    $vsCommandPrompt = Get-VisualStudioCommandPromptPath
+		# Store the VS Command Prompt to do the build in, if one exists.
+		$vsCommandPrompt = Get-VisualStudioCommandPromptPath
 
-	    # Local Variables.
-	    $solutionFileName = (Get-ItemProperty -Path $Path).Name
-	    $buildLogFilePath = (Join-Path $BuildLogDirectoryPath $solutionFileName) + ".msbuild.log"
-	    $windowStyle = if ($ShowBuildWindow -or $ShowBuildWindowAndPromptForInputBeforeClosing) { "Normal" } else { "Hidden" }
-	    $buildCrashed = $false;
-	
-	    # If all we want is the path to the Log file that will be generated, return it.
-	    if ($GetLogPath)
-	    {
-		    return $buildLogFilePath
-	    }
+		# Local Variables.
+		$solutionFileName = (Get-ItemProperty -Path $Path).Name
+		$buildLogFilePath = (Join-Path $BuildLogDirectoryPath $solutionFileName) + ".msbuild.log"
+		$windowStyle = if ($ShowBuildWindow -or $ShowBuildWindowAndPromptForInputBeforeClosing) { "Normal" } else { "Hidden" }
+		$buildCrashed = $false;
 
-	    # Try and build the solution.
-	    try
-	    {
-		    # Build the arguments to pass to MsBuild.
-		    $buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"""
+		# If all we want is the path to the Log file that will be generated, return it.
+		if ($GetLogPath)
+		{
+			return $buildLogFilePath
+		}
 
-		    # If a VS Command Prompt was found, call MSBuild from that since it sets environmental variables that may be needed to build some projects.
+		# Try and build the solution.
+		try
+		{
+			# Build the arguments to pass to MsBuild.
+			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"""
+
+			# If a VS Command Prompt was found, call MSBuild from that since it sets environmental variables that may be needed to build some projects.
 			if ($vsCommandPrompt -ne $null)
-		    {
+			{
 				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPrompt"" & msbuild "
 			}
 			# Else the VS Command Prompt was not found, so just build using MSBuild directly.
 			else
 			{
 				# Get the path to the MsBuild executable.
-			    $msBuildPath = Get-MsBuildPath
+				$msBuildPath = Get-MsBuildPath
 				$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
 			}
-			
-		    # Append the MSBuild arguments to pass into cmd.exe in order to do the build.
-		    $pauseForInput = if ($ShowBuildWindowAndPromptForInputBeforeClosing) { "Pause & " } else { "" }
-		    $cmdArgumentsToRunMsBuild += "$buildArguments & $pauseForInput Exit"" "
 
-		    Write-Debug "Starting new cmd.exe process with arguments ""$cmdArgumentsToRunMsBuild""."
+			# Append the MSBuild arguments to pass into cmd.exe in order to do the build.
+			$pauseForInput = if ($ShowBuildWindowAndPromptForInputBeforeClosing) { "Pause & " } else { "" }
+			$cmdArgumentsToRunMsBuild += "$buildArguments & $pauseForInput Exit"" "
 
-		    # Perform the build.
-		    if ($PassThru)
-		    {
-			    return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -PassThru
-		    }
-		    else
-		    {
-			    Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -Wait
-		    }
-	    }
-	    catch
-	    {
-		    $buildCrashed = $true;
-		    $errorMessage = $_
-		    Write-Error ("Unexpect error occured while building ""$Path"": $errorMessage" );
-	    }
+			Write-Debug "Starting new cmd.exe process with arguments ""$cmdArgumentsToRunMsBuild""."
 
-	    # If the build crashed, return that the build didn't succeed.
-	    if ($buildCrashed)
-	    {
-		    return $false
-	    }
-	
-	    # Get if the build failed or not by looking at the log file.
-	    $buildSucceeded = ((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null)
+			# Perform the build.
+			if ($PassThru)
+			{
+				return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -PassThru
+			}
+			else
+			{
+				Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -Wait
+			}
+		}
+		catch
+		{
+			$buildCrashed = $true;
+			$errorMessage = $_
+			Write-Error ("Unexpect error occured while building ""$Path"": $errorMessage" );
+		}
 
-	    # If the build succeeded.
-	    if ($buildSucceeded)
-	    {
-		    # If we shouldn't keep the log around, delete it.
-		    if (!$KeepBuildLogOnSuccessfulBuilds)
-		    {
-			    Remove-Item -Path $buildLogFilePath -Force
-		    }
-	    }
-	    # Else at least one of the projects failed to build.
-	    else
-	    {
-		    # Write the error message as a warning.
-		    Write-Warning "FAILED to build ""$Path"". Please check the build log ""$buildLogFilePath"" for details." 
+		# If the build crashed, return that the build didn't succeed.
+		if ($buildCrashed)
+		{
+			return $false
+		}
 
-		    # If we should show the build log automatically, open it with the default viewer.
-		    if($AutoLaunchBuildLogOnFailure)
-		    {
-			    Start-Process -verb "Open" $buildLogFilePath;
-		    }
-	    }
-	
-	    # Return if the Build Succeeded or Failed.
-	    return $buildSucceeded
-    }
+		# Get if the build failed or not by looking at the log file.
+		$buildSucceeded = ((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null)
+
+		# If the build succeeded.
+		if ($buildSucceeded)
+		{
+			# If we shouldn't keep the log around, delete it.
+			if (!$KeepBuildLogOnSuccessfulBuilds)
+			{
+				Remove-Item -Path $buildLogFilePath -Force
+			}
+		}
+		# Else at least one of the projects failed to build.
+		else
+		{
+			# Write the error message as a warning.
+			Write-Warning "FAILED to build ""$Path"". Please check the build log ""$buildLogFilePath"" for details." 
+
+			# If we should show the build log automatically, open it with the default viewer.
+			if($AutoLaunchBuildLogOnFailure)
+			{
+				Start-Process -verb "Open" $buildLogFilePath;
+			}
+		}
+
+		# Return if the Build Succeeded or Failed.
+		return $buildSucceeded
+	}
 }
 
 function Get-VisualStudioCommandPromptPath
