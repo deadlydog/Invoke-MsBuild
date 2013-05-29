@@ -49,10 +49,21 @@ function Invoke-MsBuild
 	If set, the build will not actually be performed.
 	Instead it will just return the full path of the MsBuild Log file that would be created if the build is performed with the same parameters.
 	
-	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
+	.OUTPUTS
+	When the -PassThru switch is not provided, a boolean value is returned; $true indicates that MsBuild completed successfully, $false indicates 
+	that MsBuild failed with errors, or that something else went wrong.
 	
-	Perform the default MSBuild actions on the Visual Studio solution to build the projects in it.
+	When the -PassThru switch is provided, the process being used to run the build is returned.
+	
+	.EXAMPLE
+	$buildSucceeded = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
+	
+	if ($buildSucceeded)
+	{ Write-Host "Build completed successfully." }
+	else
+	{ Write-Host "Build failed. Check the build log file for errors." }
+	
+	Perform the default MSBuild actions on the Visual Studio solution to build the projects in it, and returns whether the build succeeded or failed.
 	The PowerShell script will halt execution until MsBuild completes.
 	
 	.EXAMPLE
