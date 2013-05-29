@@ -56,7 +56,7 @@ function Invoke-MsBuild
 	The PowerShell script will halt execution until MsBuild completes.
 	
 	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
+	$process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 	
 	Perform the default MSBuild actions on the Visual Studio solution to build the projects in it.
 	The PowerShell script will not halt execution; instead it will return the process performing MSBuild actions back to the caller while the action is performed.
