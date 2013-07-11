@@ -125,7 +125,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.1
+	Version: 1.2
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
