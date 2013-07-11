@@ -1,12 +1,12 @@
 function Invoke-MsBuild
 {
-	<#
+<#
 	.SYNOPSIS
 	Builds the given Visual Studio solution or project file using MSBuild.
 	
 	.DESCRIPTION
 	Executes the MSBuild.exe tool against the specified Visual Studio solution or project file.
-	Returns true if the build succeeded, false if the build failed.
+	Returns true if the build succeeded, false if the build failed, and $null if we could not determine the build result.
 	If using the PathThru switch, the process running MSBuild is returned instead.
 	
 	.PARAMETER Path
