@@ -51,7 +51,7 @@ function Invoke-MsBuild
 	
 	.OUTPUTS
 	When the -PassThru switch is not provided, a boolean value is returned; $true indicates that MsBuild completed successfully, $false indicates 
-	that MsBuild failed with errors, or that something else went wrong.
+	that MsBuild failed with errors (or that something else went wrong), and $null indicates that we were unable to determine if the build succeeded or failed.
 	
 	When the -PassThru switch is provided, the process being used to run the build is returned.
 	
@@ -251,6 +251,13 @@ function Invoke-MsBuild
 		{
 			return $false
 		}
+
+        # If we can't find the build's log file in order to inspect it, write a warning and return null.
+        if (!(Test-Path -Path $buildLogFilePath))
+        {
+            Write-Warning "Cannot find the build log file at '$buildLogFilePath', so unable to determine if build succeeded or not."
+            return $null
+        }
 
 		# Get if the build failed or not by looking at the log file.
 		$buildSucceeded = ((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null)
