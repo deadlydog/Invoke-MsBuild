@@ -125,7 +125,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.2
+	Version: 1.3
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -174,7 +174,13 @@ function Invoke-MsBuild
 		[switch] $GetLogPath
 	)
 
-	BEGIN { }
+	BEGIN 
+    { 
+        # Throw an exception if client is not using the minimum required PowerShell version.
+        $REQUIRED_POWERSHELL_VERSION = 2.0  # The minimum Major.Minor PowerShell version that is required for the script to run.
+        $POWERSHELL_VERSION = $PSVersionTable.PSVersion.Major + ($PSVersionTable.PSVersion.Minor / 10)
+        if ($REQUIRED_POWERSHELL_VERSION -gt $POWERSHELL_VERSION) { throw "PowerShell version $REQUIRED_POWERSHELL_VERSION is required for this script; You are only running version $POWERSHELL_VERSION. Please update PowerShell to at least version $REQUIRED_POWERSHELL_VERSION." }
+    }
 	END { }
 	PROCESS
 	{
@@ -182,6 +188,11 @@ function Invoke-MsBuild
 		# 	This must come after a script's/function's param section.
 		# 	Forces a function to be the first non-comment code to appear in a PowerShell Script/Module.
 		Set-StrictMode -Version Latest
+
+        # Default the ParameterSet variables that may not have been set depending on which parameter set is being used.
+        if (!(Test-Path variable:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
+        if (!(Test-Path variable:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
+        if (!(Test-Path variable:PassThru)) { $PassThru = $false }
 
 		# If the keyword was supplied, place the log in the same folder as the solution/project being built.
 		if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
