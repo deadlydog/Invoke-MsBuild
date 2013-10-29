@@ -189,10 +189,10 @@ function Invoke-MsBuild
 		# 	Forces a function to be the first non-comment code to appear in a PowerShell Script/Module.
 		Set-StrictMode -Version Latest
 
-        # Default the ParameterSet variables that may not have been set depending on which parameter set is being used.
-        if (!(Test-Path variable:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
-        if (!(Test-Path variable:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
-        if (!(Test-Path variable:PassThru)) { $PassThru = $false }
+        # Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
+        if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
+        if (!(Test-Path Variable:Private:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
+        if (!(Test-Path Variable:Private:PassThru)) { $PassThru = $false }
 
 		# If the keyword was supplied, place the log in the same folder as the solution/project being built.
 		if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
