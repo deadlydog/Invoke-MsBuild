@@ -126,7 +126,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.3
+	Version: 1.4
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -297,36 +297,32 @@ function Invoke-MsBuild
 
 function Get-VisualStudioCommandPromptPath
 {
- <#
+<#
 	.SYNOPSIS
 		Gets the file path to the latest Visual Studio Command Prompt. Returns $null if a path is not found.
 	
 	.DESCRIPTION
 		Gets the file path to the latest Visual Studio Command Prompt. Returns $null if a path is not found.
-	#>
+#>
 
-# Get some environmental paths.
-$vs2010CommandPrompt = $env:VS100COMNTOOLS + "vcvarsall.bat"
-$vs2012CommandPrompt = $env:VS110COMNTOOLS + "VsDevCmd.bat"
+	# Get some environmental paths.
+	$vs2010CommandPrompt = $env:VS100COMNTOOLS + "vcvarsall.bat"
+	$vs2012CommandPrompt = $env:VS110COMNTOOLS + "VsDevCmd.bat"
+	$vs2013CommandPrompt = $env:VS120COMNTOOLS + "VsDevCmd.bat"
 
-# Store the VS Command Prompt to do the build in, if one exists.
-$vsCommandPrompt = $null
-if (Test-Path $vs2012CommandPrompt)
-{
-	$vsCommandPrompt = $vs2012CommandPrompt
-}
-elseif (Test-Path $vs2010CommandPrompt)
-{
-	$vsCommandPrompt = $vs2010CommandPrompt
-}
+	# Store the VS Command Prompt to do the build in, if one exists.
+	$vsCommandPrompt = $null
+	if (Test-Path $vs2013CommandPrompt) { $vsCommandPrompt = $vs2013CommandPrompt }
+	elseif (Test-Path $vs2012CommandPrompt) { $vsCommandPrompt = $vs2012CommandPrompt }
+	elseif (Test-Path $vs2010CommandPrompt) { $vsCommandPrompt = $vs2010CommandPrompt }
 
-# Return the path to the VS Command Prompt if it was found.
-return $vsCommandPrompt
+	# Return the path to the VS Command Prompt if it was found.
+	return $vsCommandPrompt
 }
 
 function Get-MsBuildPath
 {
- <#
+<#
 	.SYNOPSIS
 	Gets the path to the latest version of MsBuild.exe. Returns $null if a path is not found.
 	
@@ -334,24 +330,29 @@ function Get-MsBuildPath
 	Gets the path to the latest version of MsBuild.exe. Returns $null if a path is not found.
 #>
 
-# Array of valid MsBuild versions
-$Versions = @("4.0", "3.5", "2.0")
+	# Array of valid MsBuild versions
+	$versions = @("12.0", "4.0", "3.5", "2.0")
 
-# Loop through each version from largest to smallest
-foreach ($Version in $Versions) 
-{
-	# Try to find an instance of that particular version in the registry
-	$RegKey = "HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\${Version}"
-	$ItemProperty = Get-ItemProperty $RegKey -ErrorAction SilentlyContinue
-
-	# If registry entry exsists, then get the msbuild path and retrun 
-	if ($ItemProperty -ne $null)
+	# Loop through each version from largest to smallest.
+	foreach ($version in $versions) 
 	{
-		return Join-Path $ItemProperty.MSBuildToolsPath -ChildPath MsBuild.exe
-	}
-} 
+		# Try to find an instance of that particular version in the registry
+		$regKey = "HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\${Version}"
+		$itemProperty = Get-ItemProperty $RegKey -ErrorAction SilentlyContinue
 
-# Return that we were not able to find MsBuild.exe.
-return $null
+		# If registry entry exsists, then get the msbuild path and retrun 
+		if ($itemProperty -ne $null -and $itemProperty.MSBuildToolsPath -ne $null)
+		{
+			# Get the path from the registry entry, and return it if it exists.
+			$msBuildPath = Join-Path $itemProperty.MSBuildToolsPath -ChildPath "MsBuild.exe"
+			if (Test-Path $msBuildPath)
+			{
+				return $msBuildPath
+			}
+		}
+	} 
+
+	# Return that we were not able to find MsBuild.exe.
+	return $null
 }
 Export-ModuleMember -Function Invoke-MsBuild
