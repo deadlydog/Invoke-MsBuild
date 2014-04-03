@@ -1,4 +1,4 @@
-#Requires -Version 2.0
+﻿#Requires -Version 2.0
 function Invoke-MsBuild
 {
 <#
@@ -126,7 +126,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.4
+	Version: 1.5
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -242,7 +242,8 @@ function Invoke-MsBuild
 			}
 			else
 			{
-				Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -Wait
+				$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -Wait -PassThru
+				$processExitCode = $process.ExitCode
 			}
 		}
 		catch
@@ -266,7 +267,7 @@ function Invoke-MsBuild
         }
 
 		# Get if the build failed or not by looking at the log file.
-		$buildSucceeded = ((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null)
+		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $processExitCode -eq 0)
 
 		# If the build succeeded.
 		if ($buildSucceeded)
