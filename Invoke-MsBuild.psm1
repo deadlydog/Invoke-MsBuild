@@ -325,35 +325,41 @@ function Get-MsBuildPath
 {
 <#
 	.SYNOPSIS
-	Gets the path to the latest version of MsBuild.exe. Returns $null if a path is not found.
+	Gets the path to the latest version of MsBuild.exe. Throws an exception if MSBuild.exe is not found.
 	
 	.DESCRIPTION
-	Gets the path to the latest version of MsBuild.exe. Returns $null if a path is not found.
+	Gets the path to the latest version of MsBuild.exe. Throws an exception if MSBuild.exe is not found.
 #>
 
-	# Array of valid MsBuild versions
-	$versions = @("12.0", "4.0", "3.5", "2.0")
+	# Get the latest version of Visual Studio installed on this sytem.
+	$VsVersion = Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\VisualStudio\' | Where{$_ -match '[0-9].'} |sort pschildname -Descending | select -first 1 -ExpandProperty pschildname  
 
-	# Loop through each version from largest to smallest.
-	foreach ($version in $versions) 
+	# MsBuild is included with Visual Studio instead of .Net as of VS 2013 (v12.0), so need to look in .Net framework path if they don't have at least VS 2013 installed.
+	if([version]$VsVersion -ge [version]"12.0")
 	{
-		# Try to find an instance of that particular version in the registry
-		$regKey = "HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\${Version}"
-		$itemProperty = Get-ItemProperty $RegKey -ErrorAction SilentlyContinue
+		$MsBuildVersion = $VsVersion
+	}
+	else
+	{
+		$MsBuildVersion = (Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP' | sort pschildname -Descending | select -first 1 -ExpandProperty pschildname).Substring(1)
+	}
 
-		# If registry entry exsists, then get the msbuild path and retrun 
-		if ($itemProperty -ne $null -and $itemProperty.MSBuildToolsPath -ne $null)
-		{
-			# Get the path from the registry entry, and return it if it exists.
-			$msBuildPath = Join-Path $itemProperty.MSBuildToolsPath -ChildPath "MsBuild.exe"
-			if (Test-Path $msBuildPath)
-			{
-				return $msBuildPath
-			}
-		}
-	} 
+	# Get the path to the directory that MSBuild is in.
+	$MsBuildDirectoryPath = ('HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\{0}' -f $MsBuildVersion) | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
 
-	# Return that we were not able to find MsBuild.exe.
-	return $null
+	if(!$MsBuildDirectoryPath)
+	{
+		throw 'MsBuild.exe was not found on the system.'          
+	}
+
+	# Get the path to the MSBuild executable.
+	$MsBuildPath = (Join-Path -Path $MsBuildDirectoryPath -ChildPath 'msbuild.exe')
+
+	if(!(Test-Path $MsBuildPath -PathType Leaf))
+	{
+		throw 'MsBuild.exe was not found on the system.'          
+	}
+
+	return $MsBuildPath
 }
 Export-ModuleMember -Function Invoke-MsBuild
