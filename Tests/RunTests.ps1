@@ -17,16 +17,16 @@ $pathToBrokenSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "SolutionThatShouldFa
 $invalidPath = (Join-Path $THIS_SCRIPTS_DIRECTORY "invalid\path")
 
 Write-Host "Build solution... Should get True"
-Invoke-MsBuild -Path $pathToGoodSolution
+if ((Invoke-MsBuild -Path $pathToGoodSolution) -eq $true) { Write-Host "Passed" } else { throw "Test 1 failed." }
 
 Write-Host "Build solution via piping... Should get True"
-$pathToGoodSolution | Invoke-MsBuild
+if (($pathToGoodSolution | Invoke-MsBuild) -eq $true) { Write-Host "Passed" } else { throw "Test 2 failed." }
 
 Write-Host "Build multiple solutions (3) via piping... Should get True True True"
-$pathToGoodSolution, $pathToGoodSolution, $pathToGoodSolution | Invoke-MsBuild
+if (($pathToGoodSolution, $pathToGoodSolution, $pathToGoodSolution | Invoke-MsBuild) -eq @($true, $true, $true)) { Write-Host "Passed" } else { throw "Test 3 failed." }
 
 Write-Host "Build multiple solutions (3) via piping, where the 2nd one is an invalid path... Should get True ERROR True"
 $pathToGoodSolution, $invalidPath, $pathToGoodSolution | Invoke-MsBuild
 
 Write-Host "Build broken solution... Should get False"
-Invoke-MsBuild -Path $pathToBrokenSolution
+if ((Invoke-MsBuild -Path $pathToBrokenSolution) -eq $false) { Write-Host "Passed" } else { throw "Test 5 failed." }
