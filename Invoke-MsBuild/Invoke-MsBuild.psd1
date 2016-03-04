@@ -12,7 +12,7 @@
 RootModule = 'C:\dev\Git\Invoke-MsBuild\Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.6.1'
+ModuleVersion = '1.6.1.1'
 
 # ID used to uniquely identify this module
 GUID = '8ca20938-b92a-42a1-bf65-f644e16a8d9e'
