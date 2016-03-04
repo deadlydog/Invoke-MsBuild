@@ -126,7 +126,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.6.0
+	Version: 1.6.1
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -307,20 +307,29 @@ function Get-VisualStudioCommandPromptPath
 #>
 
 	# Get some environmental paths.
-	$vs2010CommandPrompt = $env:VS100COMNTOOLS + "vcvarsall.bat"
-	$vs2012CommandPrompt = $env:VS110COMNTOOLS + "VsDevCmd.bat"
-	$vs2013CommandPrompt = $env:VS120COMNTOOLS + "VsDevCmd.bat"
-	$vs2015CommandPrompt = $env:VS140COMNTOOLS + "VsDevCmd.bat"
+	$vs2015CommandPromptPath = $env:VS140COMNTOOLS + 'VsDevCmd.bat'
+	$vs2013CommandPromptPath = $env:VS120COMNTOOLS + 'VsDevCmd.bat'
+	$vs2012CommandPromptPath = $env:VS110COMNTOOLS + 'VsDevCmd.bat'
+	$vs2010CommandPromptPath = $env:VS100COMNTOOLS + 'vcvarsall.bat'
+	$vsCommandPromptPaths = @($vs2015CommandPromptPath, $vs2013CommandPromptPath, $vs2012CommandPromptPath, $vs2010CommandPromptPath)
 
 	# Store the VS Command Prompt to do the build in, if one exists.
-	$vsCommandPrompt = $null
-	if (Test-Path $vs2015CommandPrompt) { $vsCommandPrompt = $vs2015CommandPrompt }
-	elseif (Test-Path $vs2013CommandPrompt) { $vsCommandPrompt = $vs2013CommandPrompt }
-	elseif (Test-Path $vs2012CommandPrompt) { $vsCommandPrompt = $vs2012CommandPrompt }
-	elseif (Test-Path $vs2010CommandPrompt) { $vsCommandPrompt = $vs2010CommandPrompt }
+	$vsCommandPromptPath = $null
+	foreach ($path in $vsCommandPromptPaths)
+	{
+		try
+		{
+			if (Test-Path -Path $path)
+			{
+				$vsCommandPromptPath = $path
+				break
+			}
+		}
+		catch {}
+	}
 
 	# Return the path to the VS Command Prompt if it was found.
-	return $vsCommandPrompt
+	return $vsCommandPromptPath
 }
 
 function Get-MsBuildPath
@@ -355,4 +364,5 @@ function Get-MsBuildPath
 
 	return $MsBuildPath
 }
+
 Export-ModuleMember -Function Invoke-MsBuild
