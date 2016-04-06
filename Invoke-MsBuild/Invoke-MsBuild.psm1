@@ -126,7 +126,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.6.1
+	Version: 1.6.2
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -215,6 +215,12 @@ function Invoke-MsBuild
 		{
 			# Build the arguments to pass to MsBuild.
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"""
+
+			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause msbuild to hang for some reason).
+			if ($buildArguments -notlike '*UseSharedCompilation*')
+			{
+				$buildArguments += " /p:UseSharedCompilation=false " # prevent processes from hanging (Roslyn compiler?)
+			}
 
 			# If a VS Command Prompt was found, call MSBuild from that since it sets environmental variables that may be needed to build some projects.
 			if ($vsCommandPrompt -ne $null)
