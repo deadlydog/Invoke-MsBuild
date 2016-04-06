@@ -150,8 +150,7 @@ function Invoke-MsBuild
 		[string] $Path,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Params")]
-		[Alias("P")]
+		[Alias("Params","P")]
 		[string] $MsBuildParameters,
 
 		[parameter(Mandatory=$false)]
@@ -161,20 +160,16 @@ function Invoke-MsBuild
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("AutoLaunch")]
-		[Alias("A")]
+		[Alias("AutoLaunch","A")]
 		[switch] $AutoLaunchBuildLogOnFailure,
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("Keep")]
-		[Alias("K")]
+		[Alias("Keep","K")]
 		[switch] $KeepBuildLogOnSuccessfulBuilds,
 
 		[parameter(Mandatory=$false)]
-		[Alias("ShowBuildWindow")]
-		[Alias("Show")]
-		[Alias("S")]
+		[Alias("ShowBuildWindow","Show","S")]
 		[switch] $ShowBuildOutputInNewWindow,
 
 		[parameter(Mandatory=$false)]
@@ -188,8 +183,7 @@ function Invoke-MsBuild
 		[switch] $PassThru,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Get")]
-		[Alias("G")]
+		[Alias("Get","G")]
 		[switch] $GetLogPath
 	)
 
