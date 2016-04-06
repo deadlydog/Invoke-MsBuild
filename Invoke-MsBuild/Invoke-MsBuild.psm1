@@ -32,19 +32,33 @@ function Invoke-MsBuild
 	If set, this switch will cause the msbuild log file to not be deleted on successful builds; normally it is only kept around on failed builds.
 	NOTE: This switch cannot be used with the PassThru switch.
 	
-	.PARAMETER ShowBuildWindow
+	.PARAMETER ShowBuildOutputInNewWindow
 	If set, this switch will cause a command prompt window to be shown in order to view the progress of the build.
+	By default the build output is not shown in any window.
+	NOTE: This switch cannot be used with the ShowBuildOutputInCurrentWindow switch.
 	
-	.PARAMETER ShowBuildWindowAndPromptForInputBeforeClosing
-	If set, this switch will cause a command prompt window to be shown in order to view the progress of the build, and it will remain open
-	after the build completes until the user presses a key on it.
-	NOTE: If not using PassThru, the user will need to provide input before execution will return back to the calling script.
+	.PARAMETER ShowBuildOutputInCurrentWindow
+	If set, this switch will cause the build process to be started in the existing console window, instead of creating a new one.
+	By default the build output is not shown in any window.
+	NOTE: This switch will override the ShowBuildOutputInNewWindow switch.
+	NOTE: There is a problem with the -NoNewWindow parameter of the Start-Process cmdlet; this is used for the ShowBuildOutputInCurrentWindow switch.
+		  The bug is that in some PowerShell consoles, the build output is not directed back to the console calling this function, so nothing is displayed.
+		  To avoid the process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
+		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with this console (not others, like ISE, etc.).
 	
+	.PARAMETER PromptForInputBeforeClosing
+	If set, this switch will prompt the user for input after the build completes, and will not continue until the user presses a key.
+	NOTE: This switch only has an effect when used with the ShowBuildOutputInNewWindow and ShowBuildOutputInCurrentWindow switches.
+	NOTE: This switch cannot be used with the PassThru switch.
+	NOTE: The user will need to provide input before execution will return back to the calling script.
+	NOTE: To avoid the process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
+		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with this console (not others, like ISE, etc.).
+
 	.PARAMETER PassThru
 	If set, this switch will cause the script not to wait until the build (launched in another process) completes before continuing execution.
 	Instead the build will be started in a new process and that process will immediately be returned, allowing the calling script to continue 
 	execution while the build is performed, and also to inspect the process to see when it completes.
-	NOTE: This switch cannot be used with the AutoLaunchBuildLog or KeepBuildLogOnSuccessfulBuilds switches.
+	NOTE: This switch cannot be used with the AutoLaunchBuildLog, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
 	
 	.PARAMETER GetLogPath
 	If set, the build will not actually be performed.
@@ -74,7 +88,7 @@ function Invoke-MsBuild
 	The PowerShell script will not halt execution; instead it will return the process performing MSBuild actions back to the caller while the action is performed.
 	
 	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildWindow
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildOutputInNewWindow
 	
 	Cleans then Builds the given C# project.
 	A window displaying the output from MsBuild will be shown so the user can view the progress of the build.
@@ -86,7 +100,7 @@ function Invoke-MsBuild
 	Here the shorter "Params" alias is used instead of the full "MsBuildParameters" parameter name.
 	
 	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildWindowAndPromptForInputBeforeClosing -AutoLaunchBuildLog
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLog
 	
 	Builds the given C# project.
 	A window displaying the output from MsBuild will be shown so the user can view the progress of the build, and it will not close until the user
@@ -126,7 +140,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.6.1
+	Version: 2.0.0
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -158,14 +172,18 @@ function Invoke-MsBuild
 		[switch] $KeepBuildLogOnSuccessfulBuilds,
 
 		[parameter(Mandatory=$false)]
+		[Alias("ShowBuildWindow")]
 		[Alias("Show")]
 		[Alias("S")]
-		[switch] $ShowBuildWindow,
-
+		[switch] $ShowBuildOutputInNewWindow,
+		
 		[parameter(Mandatory=$false)]
-		[Alias("Prompt")]
-		[switch] $ShowBuildWindowAndPromptForInputBeforeClosing,
+		[switch] $ShowBuildOutputInCurrentWindow,
 
+		[parameter(Mandatory=$false,ParameterSetName="Wait")]
+		[Alias("Prompt")]
+		[switch] $PromptForInputBeforeClosing,
+		
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
 
@@ -188,6 +206,7 @@ function Invoke-MsBuild
         if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
         if (!(Test-Path Variable:Private:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
         if (!(Test-Path Variable:Private:PassThru)) { $PassThru = $false }
+        if (!(Test-Path Variable:Private:ShowBuildOutputInCurrentWindow)) { $ShowBuildOutputInCurrentWindow = $false }
 
 		# If the keyword was supplied, place the log in the same folder as the solution/project being built.
 		if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
@@ -200,8 +219,8 @@ function Invoke-MsBuild
 
 		# Local Variables.
 		$solutionFileName = (Get-ItemProperty -Path $Path).Name
-		$buildLogFilePath = (Join-Path $BuildLogDirectoryPath $solutionFileName) + ".msbuild.log"
-		$windowStyle = if ($ShowBuildWindow -or $ShowBuildWindowAndPromptForInputBeforeClosing) { "Normal" } else { "Hidden" }
+		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
+		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
 		$buildCrashed = $false;
 
 		# If all we want is the path to the Log file that will be generated, return it.
@@ -215,6 +234,12 @@ function Invoke-MsBuild
 		{
 			# Build the arguments to pass to MsBuild.
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"""
+			
+			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause msbuild to hang for some reason).
+			if ($buildArguments -notlike '*UseSharedCompilation*')
+			{
+				$buildArguments += " /p:UseSharedCompilation=false " # prevent processes from hanging (Roslyn compiler?)
+			}
 
 			# If a VS Command Prompt was found, call MSBuild from that since it sets environmental variables that may be needed to build some projects.
 			if ($vsCommandPrompt -ne $null)
@@ -230,19 +255,42 @@ function Invoke-MsBuild
 			}
 
 			# Append the MSBuild arguments to pass into cmd.exe in order to do the build.
-			$pauseForInput = if ($ShowBuildWindowAndPromptForInputBeforeClosing) { "Pause & " } else { "" }
-			$cmdArgumentsToRunMsBuild += "$buildArguments & $pauseForInput Exit"" "
+			$cmdArgumentsToRunMsBuild += "$buildArguments "
+			
+			# If necessary, add a pause to wait for input before exiting the cmd.exe window.
+			# No pausing allowed when using PassThru or not showing the build output.
+			# The -NoNewWindow parameter of Start-Process does not behave correctly in the ISE and other PowerShell hosts (doesn't display any build output), 
+			# so only allow it if in the default PowerShell host, since we know that one works.
+			$pauseForInput = [string]::Empty
+			if ($PromptForInputBeforeClosing -and !$PassThru `
+				-and ($ShowBuildOutputInNewWindow -or ($ShowBuildOutputInCurrentWindow -and $Host.Name -eq "ConsoleHost")))
+			{ $pauseForInput = "Pause & " }
+			$cmdArgumentsToRunMsBuild += "& $pauseForInput Exit"" "
 
 			Write-Debug "Starting new cmd.exe process with arguments ""$cmdArgumentsToRunMsBuild""."
 
 			# Perform the build.
 			if ($PassThru)
-			{
-				return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -PassThru
+			{			
+				if ($ShowBuildOutputInCurrentWindow)
+				{
+					return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -PassThru
+				}
+				else
+				{
+					return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -PassThru
+				}
 			}
 			else
 			{
-				$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyle -Wait -PassThru
+				if ($ShowBuildOutputInCurrentWindow)
+				{
+					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
+				}
+				else
+				{
+					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
+				}
 				$processExitCode = $process.ExitCode
 			}
 		}
