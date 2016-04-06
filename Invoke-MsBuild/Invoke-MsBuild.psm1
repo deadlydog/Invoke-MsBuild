@@ -1,4 +1,13 @@
 ﻿#Requires -Version 2.0
+
+
+
+# TODO:
+#	- Change to return object with properties: [bool]BuildSucceeded, [string]MsBuildLogFilePath, [string]MsBuildErrorLogFilePath, [Process]MsBuildProcess
+#	- Instead of GetLogPath, just have a -WhatIf switch that returns the log file paths and defaults/nulls the rest.
+
+
+
 function Invoke-MsBuild
 {
 <#
@@ -20,9 +29,10 @@ function Invoke-MsBuild
 	See http://msdn.microsoft.com/en-ca/library/vstudio/ms164311.aspx for valid MsBuild command-line parameters.
 	
 	.PARAMETER $BuildLogDirectoryPath
-	The directory path to write the build log file to.
-	Defaults to putting the log file in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
-	Use the keyword "PathDirectory" to put the log file in the same directory as the .sln or project file being built.
+	The directory path to write the build log files to.
+	Defaults to putting the log files in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
+	Use the keyword "PathDirectory" to put the log files in the same directory as the .sln or project file being built.
+	Two log files are generated: one with the complete build log, and one that contains only errors from the build.
 	
 	.PARAMETER AutoLaunchBuildLog
 	If set, this switch will cause the build log to automatically be launched into the default viewer if the build fails.
@@ -131,8 +141,8 @@ function Invoke-MsBuild
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -GetLogPath
 	
 	Returns the full path to the MsBuild Log file that would be created if the build was ran with the same parameters.
-	In this example the returned log path might be "C:\BuildLogs\MyProject.msbuild.log".
-	If the BuildLogDirectoryPath was not provided, the returned log path might be "C:\Some Folder\MyProject.msbuild.log".
+	In this example the returned log path might be "C:\BuildLogs\MyProject.msBuildLog.txt".
+	If the BuildLogDirectoryPath was not provided, the returned log path might be "C:\Some Folder\MyProject.msBuildLog.txt".
 	
 	.LINK
 	Project home: https://invokemsbuild.codeplex.com
@@ -153,7 +163,7 @@ function Invoke-MsBuild
 		[Alias("Params","P")]
 		[string] $MsBuildParameters,
 
-		[parameter(Mandatory=$false)]
+		[parameter(Mandatory=$false,HelpMessage="The directory path to write the build log file to. Use the keyword 'PathDirectory' to put the log file in the same directory as the .sln or project file being built.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("L")]
 		[string] $BuildLogDirectoryPath = $env:Temp,
@@ -207,13 +217,17 @@ function Invoke-MsBuild
 		{
 			$BuildLogDirectoryPath = [System.IO.Path]::GetDirectoryName($Path)
 		}
+		
+		# Always get the full path to the Log files directory.
+		$BuildLogDirectoryPath = [System.IO.Path]::GetFullPath($BuildLogDirectoryPath)
 
 		# Store the VS Command Prompt to do the build in, if one exists.
 		$vsCommandPrompt = Get-VisualStudioCommandPromptPath
 
 		# Local Variables.
 		$solutionFileName = (Get-ItemProperty -Path $Path).Name
-		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
+		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msBuildLog.txt"
+		$buildErrorsLogPath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msBuildLog.errors.txt"
 		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
 		$buildCrashed = $false;
 
@@ -227,7 +241,7 @@ function Invoke-MsBuild
 		try
 		{
 			# Build the arguments to pass to MsBuild.
-			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"""
+			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"" /fileLoggerParameters1:LogFile=""$buildErrorsLogPath"";errorsonly"
 
 			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause msbuild to hang for some reason).
 			if ($buildArguments -notlike '*UseSharedCompilation*')
@@ -280,9 +294,9 @@ function Invoke-MsBuild
 				if ($ShowBuildOutputInCurrentWindow)
 				{
 					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
-			}
-			else
-			{
+				}
+				else
+				{
 					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
 				}
 				$processExitCode = $process.ExitCode
@@ -314,10 +328,11 @@ function Invoke-MsBuild
 		# If the build succeeded.
 		if ($buildSucceeded)
 		{
-			# If we shouldn't keep the log around, delete it.
+			# If we shouldn't keep the log files around, delete them.
 			if (!$KeepBuildLogOnSuccessfulBuilds)
 			{
-				Remove-Item -Path $buildLogFilePath -Force
+				if (Test-Path $buildLogFilePath -PathType Leaf) { Remove-Item -Path $buildLogFilePath -Force }
+				if (Test-Path $buildErrorsLogPath -PathType Leaf) { Remove-Item -Path $buildErrorsLogPath -Force }
 			}
 		}
 		# Else at least one of the projects failed to build.
