@@ -176,14 +176,14 @@ function Invoke-MsBuild
 		[Alias("Show")]
 		[Alias("S")]
 		[switch] $ShowBuildOutputInNewWindow,
-		
+
 		[parameter(Mandatory=$false)]
 		[switch] $ShowBuildOutputInCurrentWindow,
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[Alias("Prompt")]
 		[switch] $PromptForInputBeforeClosing,
-		
+
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
 
@@ -234,7 +234,7 @@ function Invoke-MsBuild
 		{
 			# Build the arguments to pass to MsBuild.
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"""
-			
+
 			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause msbuild to hang for some reason).
 			if ($buildArguments -notlike '*UseSharedCompilation*')
 			{
@@ -271,7 +271,7 @@ function Invoke-MsBuild
 
 			# Perform the build.
 			if ($PassThru)
-			{			
+			{
 				if ($ShowBuildOutputInCurrentWindow)
 				{
 					return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -PassThru
@@ -286,9 +286,9 @@ function Invoke-MsBuild
 				if ($ShowBuildOutputInCurrentWindow)
 				{
 					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
-				}
-				else
-				{
+			}
+			else
+			{
 					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
 				}
 				$processExitCode = $process.ExitCode
