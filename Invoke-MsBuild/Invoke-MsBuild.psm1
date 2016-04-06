@@ -126,7 +126,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 1.6.2
+	Version: 1.6.3
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -136,8 +136,7 @@ function Invoke-MsBuild
 		[string] $Path,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Params")]
-		[Alias("P")]
+		[Alias("Params","P")]
 		[string] $MsBuildParameters,
 
 		[parameter(Mandatory=$false)]
@@ -147,19 +146,16 @@ function Invoke-MsBuild
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("AutoLaunch")]
-		[Alias("A")]
+		[Alias("AutoLaunch","A")]
 		[switch] $AutoLaunchBuildLogOnFailure,
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("Keep")]
-		[Alias("K")]
+		[Alias("Keep","K")]
 		[switch] $KeepBuildLogOnSuccessfulBuilds,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Show")]
-		[Alias("S")]
+		[Alias("Show","S")]
 		[switch] $ShowBuildWindow,
 
 		[parameter(Mandatory=$false)]
@@ -170,8 +166,7 @@ function Invoke-MsBuild
 		[switch] $PassThru,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Get")]
-		[Alias("G")]
+		[Alias("Get","G")]
 		[switch] $GetLogPath
 	)
 
