@@ -141,8 +141,8 @@ function Invoke-MsBuild
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -GetLogPath
 	
 	Returns the full path to the MsBuild Log file that would be created if the build was ran with the same parameters.
-	In this example the returned log path might be "C:\BuildLogs\MyProject.msBuildLog.txt".
-	If the BuildLogDirectoryPath was not provided, the returned log path might be "C:\Some Folder\MyProject.msBuildLog.txt".
+	In this example the returned log path might be "C:\BuildLogs\MyProject.msbuild.log".
+	If the BuildLogDirectoryPath was not provided, the returned log path might be "C:\Some Folder\MyProject.msbuild.log".
 	
 	.LINK
 	Project home: https://invokemsbuild.codeplex.com
@@ -226,8 +226,8 @@ function Invoke-MsBuild
 
 		# Local Variables.
 		$solutionFileName = (Get-ItemProperty -Path $Path).Name
-		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msBuildLog.txt"
-		$buildErrorsLogPath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msBuildLog.errors.txt"
+		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
+		$buildErrorsLogPath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbulid.errors.log"
 		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
 		$buildCrashed = $false;
 
