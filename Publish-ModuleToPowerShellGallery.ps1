@@ -12,6 +12,12 @@ function Replace-TextInFile([ValidateScript({Test-Path $_ -PathType Leaf})][stri
 	[System.IO.File]::WriteAllText($filePath, $newFileContents)
 }
 
+function Read-MessageBoxDialog([string]$Message, [string]$WindowTitle, [System.Windows.Forms.MessageBoxButtons]$Buttons = [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]$Icon = [System.Windows.Forms.MessageBoxIcon]::None)
+{
+	Add-Type -AssemblyName System.Windows.Forms
+	return [System.Windows.Forms.MessageBox]::Show($Message, $WindowTitle, $Buttons, $Icon)
+}
+
 function Read-InputBoxDialog([string]$Message, [string]$WindowTitle, [string]$DefaultText)
 {
 	Add-Type -AssemblyName Microsoft.VisualBasic
@@ -177,8 +183,14 @@ if ([string]::IsNullOrWhiteSpace($newVersionNumber)) { throw 'You must specify a
 $newVersionNumber = $newVersionNumber.Trim()
 
 # Prompt for the release notes for this version.
-$newReleaseNotes = Read-MultiLineInputBoxDialog -WindowTitle 'Release Notes' -Message 'What release notes should be included with this version?'
+$newReleaseNotes = Read-MultiLineInputBoxDialog -WindowTitle 'Release Notes' -Message 'What release notes should be included with this version?' -DefaultText $currentManifestReleaseNotes
 if ($newReleaseNotes -eq $null) { throw 'You cancelled out of the release notes prompt.' }
+if ($newReleaseNotes.Contains("'")) 
+{ 
+	$errorMessage = 'Single quotes are not allowed in the Release Notes, as they break our ability to parse them with PowerShell. Exiting script.'
+	Read-MessageBoxDialog -Message $errorMessage -WindowTitle 'Single Quotes Not Allowed In Release Notes'
+	throw $errorMessage
+}
 $newReleaseNotes = $newReleaseNotes.Trim()
 
 # Build the new lines to insert into the files. Wrap manifest values in single quotes in case the are empty strings still (can't replace an empty string).

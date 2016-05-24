@@ -19,16 +19,33 @@ $invalidPath = (Join-Path $THIS_SCRIPTS_DIRECTORY "invalid\path")
 $testNumber = 0
 
 Write-Host ("{0}. Build solution..." -f ++$testNumber)
-if ((Invoke-MsBuild -Path $pathToGoodSolution) -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+if ((Invoke-MsBuild -Path $pathToGoodSolution).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
 Write-Host ("{0}. Build solution via piping..." -f ++$testNumber)
-if (($pathToGoodSolution | Invoke-MsBuild) -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+if (($pathToGoodSolution | Invoke-MsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
 Write-Host ("{0}. Build multiple solutions (3) via piping..." -f ++$testNumber)
-if (($pathToGoodSolution, $pathToGoodSolution, $pathToGoodSolution | Invoke-MsBuild) -eq @($true, $true, $true)) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+if (($pathToGoodSolution, $pathToGoodSolution, $pathToGoodSolution | Invoke-MsBuild).BuildSucceeded -eq @($true, $true, $true)) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
-Write-Host ("{0}. Build multiple solutions (3) via piping, where the 2nd one is an invalid path... Should get True ERROR True" -f ++$testNumber)
-$pathToGoodSolution, $invalidPath, $pathToGoodSolution | Invoke-MsBuild
+Write-Host ("{0}. Build multiple solutions (3) via piping, where the 2nd one is an invalid path... Should get an ERROR and 2 Trues." -f ++$testNumber)
+($pathToGoodSolution, $invalidPath, $pathToGoodSolution | Invoke-MsBuild).BuildSucceeded
 
-Write-Host ("{0}. Build broken solution..." -f ++$testNumber)
-if ((Invoke-MsBuild -Path $pathToBrokenSolution) -eq $false) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+Write-Host ("{0}. Build broken solution... Should see a Warning and then Passed." -f ++$testNumber)
+if ((Invoke-MsBuild -Path $pathToBrokenSolution).BuildSucceeded -eq $false) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+
+Write-Host ("{0}. Using -WhatIf switch... Should see object's properties and values." -f ++$testNumber)
+Invoke-MsBuild -Path $pathToGoodSolution -WhatIf
+
+Write-Host ("{0}. Using -PassThru switch... Should see a few building messages." -f ++$testNumber)
+$process = Invoke-MsBuild -Path $pathToGoodSolution -PassThru	
+while (!$process.HasExited)
+{
+	Write-Host "Solution is still buildling..."
+	Start-Sleep -Milliseconds 200
+}
+
+Write-Host ("{0}. Using -ShowBuildOutputInNewWindow switch... Should see a new window that shows the build progress." -f ++$testNumber)
+Invoke-MsBuild -Path $pathToGoodSolution -ShowBuildOutputInNewWindow > $null
+
+Write-Host ("{0}. Using -ShowBuildOutputInCurrentWindow switch... Should see build progress in this window (when ran from regular PowerShell console window)." -f ++$testNumber)
+Invoke-MsBuild -Path $pathToGoodSolution -ShowBuildOutputInCurrentWindow > $null

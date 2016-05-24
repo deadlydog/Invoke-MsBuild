@@ -1,23 +1,15 @@
-﻿#Requires -Version 2.0
-
-
-
-# TODO:
-#	- Change to return object with properties: [bool]BuildSucceeded, [string]MsBuildLogFilePath, [string]MsBuildErrorLogFilePath, [Process]MsBuildProcess
-#	- Instead of GetLogPath, just have a -WhatIf switch that returns the log file paths and defaults/nulls the rest.
-
-
+#Requires -Version 2.0
 
 function Invoke-MsBuild
 {
 <#
 	.SYNOPSIS
-	Builds the given Visual Studio solution or project file using MSBuild.
+	Builds the given Visual Studio solution or project file using MsBuild.
 	
 	.DESCRIPTION
-	Executes the MSBuild.exe tool against the specified Visual Studio solution or project file.
-	Returns true if the build succeeded, false if the build failed, and null if we could not determine the build result.
-	If using the PathThru switch, the process running MSBuild is returned instead.
+	Executes the MsBuild.exe tool against the specified Visual Studio solution or project file.
+	Returns a hash table with properties for determining if the build succeeded or not, as well as other information (see the OUTPUTS section for list of properties).
+	If using the PathThru switch, the process running MsBuild is returned instead.
 	
 	.PARAMETER Path
 	The path of the Visual Studio solution or project to build (e.g. a .sln or .csproj file).
@@ -34,12 +26,18 @@ function Invoke-MsBuild
 	Use the keyword "PathDirectory" to put the log files in the same directory as the .sln or project file being built.
 	Two log files are generated: one with the complete build log, and one that contains only errors from the build.
 	
-	.PARAMETER AutoLaunchBuildLog
+	.PARAMETER AutoLaunchBuildLogOnFailure
 	If set, this switch will cause the build log to automatically be launched into the default viewer if the build fails.
+	This log file contains all of the build output.
+	NOTE: This switch cannot be used with the PassThru switch.
+	
+	.PARAMETER AutoLaunchBuildErrorsLogOnFailure
+	If set, this switch will cause the build errors log to automatically be launched into the default viewer if the build fails.
+	This log file only contains errors from the build output.
 	NOTE: This switch cannot be used with the PassThru switch.
 	
 	.PARAMETER KeepBuildLogOnSuccessfulBuilds
-	If set, this switch will cause the msbuild log file to not be deleted on successful builds; normally it is only kept around on failed builds.
+	If set, this switch will cause the MsBuild log file to not be deleted on successful builds; normally it is only kept around on failed builds.
 	NOTE: This switch cannot be used with the PassThru switch.
 	
 	.PARAMETER ShowBuildOutputInNewWindow
@@ -53,49 +51,74 @@ function Invoke-MsBuild
 	NOTE: This switch will override the ShowBuildOutputInNewWindow switch.
 	NOTE: There is a problem with the -NoNewWindow parameter of the Start-Process cmdlet; this is used for the ShowBuildOutputInCurrentWindow switch.
 		  The bug is that in some PowerShell consoles, the build output is not directed back to the console calling this function, so nothing is displayed.
-		  To avoid the process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
-		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with this console (not others, like ISE, etc.).
+		  To avoid the build process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
+		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
 	
 	.PARAMETER PromptForInputBeforeClosing
 	If set, this switch will prompt the user for input after the build completes, and will not continue until the user presses a key.
-	NOTE: This switch only has an effect when used with the ShowBuildOutputInNewWindow and ShowBuildOutputInCurrentWindow switches.
+	NOTE: This switch only has an effect when used with the ShowBuildOutputInNewWindow and ShowBuildOutputInCurrentWindow switches (otherwise build output is not displayed).
 	NOTE: This switch cannot be used with the PassThru switch.
-	NOTE: The user will need to provide input before execution will return back to the calling script.
-	NOTE: To avoid the process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
-		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with this console (not others, like ISE, etc.).
+	NOTE: The user will need to provide input before execution will return back to the calling script (so do not use this switch for automated builds).
+	NOTE: To avoid the build process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
+		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
 
 	.PARAMETER PassThru
-	If set, this switch will cause the script not to wait until the build (launched in another process) completes before continuing execution.
+	If set, this switch will cause the calling script not to wait until the build (launched in another process) completes before continuing execution.
 	Instead the build will be started in a new process and that process will immediately be returned, allowing the calling script to continue 
 	execution while the build is performed, and also to inspect the process to see when it completes.
-	NOTE: This switch cannot be used with the AutoLaunchBuildLog, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
+	NOTE: This switch cannot be used with the AutoLaunchBuildLogOnFailure, AutoLaunchBuildErrorsLogOnFailure, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
 	
-	.PARAMETER GetLogPath
+	.PARAMETER WhatIf
 	If set, the build will not actually be performed.
-	Instead it will just return the full path of the MsBuild Log file that would be created if the build is performed with the same parameters.
+	Instead it will just return the result object containing the file paths that would be created if the build is performed with the same parameters.
 	
 	.OUTPUTS
-	When the -PassThru switch is not provided, a boolean value is returned; $true indicates that MsBuild completed successfully, $false indicates 
-	that MsBuild failed with errors (or that something else went wrong), and $null indicates that we were unable to determine if the build succeeded or failed.
 	
-	When the -PassThru switch is provided, the process being used to run the build is returned.
+	When the -PassThru switch is provided, the process being used to run MsBuild.exe is returned.
+	When the -PassThru switch is not provided, a hash table with the following properties is returned:
+	
+	BuildSucceeded = $true if the build passed, $false if the build failed, and $null if we are not sure.
+	BuildLogFilePath = The path to the build's log file.
+	BuildErrorsLogFilePath = The path to the build's error log file.
+	ItemToBuildFilePath = The item that MsBuild is ran against.
+	CommandUsedToBuild = The full command that is used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
+	Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
+	MsBuildProcess = The process that was used to execute MsBuild.exe.
 	
 	.EXAMPLE
-	$buildSucceeded = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
+	$buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 	
-	if ($buildSucceeded)
+	if ($buildResult.BuildSucceeded -eq $true)
 	{ Write-Host "Build completed successfully." }
-	else
-	{ Write-Host "Build failed. Check the build log file for errors." }
+	else if (!$buildResult.BuildSucceeded -eq $false)
+	{ Write-Host "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors." }
+	else if ($buildResult.BuildSucceeded -eq $null)
+	{ Write-Host "Unsure if build passed or failed: $($buildResult.Message)" }
 	
-	Perform the default MSBuild actions on the Visual Studio solution to build the projects in it, and returns whether the build succeeded or failed.
+	Perform the default MsBuild actions on the Visual Studio solution to build the projects in it, and returns a hash table containing the results.
 	The PowerShell script will halt execution until MsBuild completes.
 	
 	.EXAMPLE
 	$process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 	
-	Perform the default MSBuild actions on the Visual Studio solution to build the projects in it.
-	The PowerShell script will not halt execution; instead it will return the process performing MSBuild actions back to the caller while the action is performed.
+	while (!$process.HasExited)
+	{
+		Write-Host "Solution is still buildling..."
+		Start-Sleep -Seconds 1
+	}
+	
+	Perform the default MsBuild actions on the Visual Studio solution to build the projects in it.
+	The PowerShell script will not halt execution; instead it will return the process running MsBuild.exe back to the caller while the build is performed.
+	You can check the process's HasExited property to check if the build has completed yet or not.
+	
+	.EXAMPLE
+	
+	if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
+	{
+		Write-Host "Build completed successfully."
+	}
+	
+	Perfom the build against the file specified at $pathToSolution and checks it for success in a single line.
 	
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildOutputInNewWindow
@@ -110,39 +133,44 @@ function Invoke-MsBuild
 	Here the shorter "Params" alias is used instead of the full "MsBuildParameters" parameter name.
 	
 	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLog
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLogOnFailure
 	
 	Builds the given C# project.
 	A window displaying the output from MsBuild will be shown so the user can view the progress of the build, and it will not close until the user
-	gives the window some input. This function will also not return until the user gives the window some input, halting the powershell script execution.
+	gives the window some input after the build completes. This function will also not return until the user gives the window some input, halting the powershell script execution.
 	If the build fails, the build log will automatically be opened in the default text viewer.
 	
 	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -KeepBuildLogOnSuccessfulBuilds -AutoLaunchBuildLog
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -KeepBuildLogOnSuccessfulBuilds -AutoLaunchBuildErrorsLogOnFailure
 	
 	Builds the given C# project.
 	The build log will be saved in "C:\BuildLogs", and they will not be automatically deleted even if the build succeeds.
-	If the build fails, the build log will automatically be opened in the default text viewer.
+	If the build fails, the build errors log will automatically be opened in the default text viewer.
 	
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath PathDirectory
 	
 	Builds the given C# project.
-	The build log will be saved in "C:\Some Folder\", which is the same directory as the project being built (i.e. directory specified in the Path).
+	The keyword 'PathDirectory' is used, so the build log will be saved in "C:\Some Folder\", which is the same directory as the project being built (i.e. directory specified in the Path).
 	
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\Database\Database.dbproj" -P "/t:Deploy /p:TargetDatabase=MyDatabase /p:TargetConnectionString=`"Data Source=DatabaseServerName`;Integrated Security=True`;Pooling=False`" /p:DeployToDatabase=True"
 	
 	Deploy the Visual Studio Database Project to the database "MyDatabase".
 	Here the shorter "P" alias is used instead of the full "MsBuildParameters" parameter name.
-	The shorter alias' of the msbuild parameters are also used; "/t" instead of "/target", and "/p" instead of "/property".
+	The shorter alias' of the MsBuild parameters are also used; "/t" instead of "/target", and "/p" instead of "/property".
 	
 	.EXAMPLE
-	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -GetLogPath
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -WhatIf
 	
-	Returns the full path to the MsBuild Log file that would be created if the build was ran with the same parameters.
-	In this example the returned log path might be "C:\BuildLogs\MyProject.msbuild.log".
-	If the BuildLogDirectoryPath was not provided, the returned log path might be "C:\Some Folder\MyProject.msbuild.log".
+	Returns the result object containing the same property values that would be created if the build was ran with the same parameters.
+	The BuildSucceeded property will be $null since no build will actually be invoked.
+	This will display all of the returned object's properties and their values.
+	
+	.EXAMPLE
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" > $null
+	
+	Builds the given C# project, discarding the result object and not displaying its properties.
 	
 	.LINK
 	Project home: https://invokemsbuild.codeplex.com
@@ -160,41 +188,41 @@ function Invoke-MsBuild
 		[string] $Path,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Params","P")]
+		[Alias("Parameters","Params","P")]
 		[string] $MsBuildParameters,
 
 		[parameter(Mandatory=$false,HelpMessage="The directory path to write the build log file to. Use the keyword 'PathDirectory' to put the log file in the same directory as the .sln or project file being built.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("L")]
+		[Alias("LogDirectory","L")]
 		[string] $BuildLogDirectoryPath = $env:Temp,
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("AutoLaunch","A")]
 		[switch] $AutoLaunchBuildLogOnFailure,
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("Keep","K")]
+		[switch] $AutoLaunchBuildErrorsLogOnFailure,
+
+		[parameter(Mandatory=$false,ParameterSetName="Wait")]
+		[ValidateNotNullOrEmpty()]
 		[switch] $KeepBuildLogOnSuccessfulBuilds,
 
 		[parameter(Mandatory=$false)]
-		[Alias("ShowBuildWindow","Show","S")]
+		[Alias("ShowBuildWindow")]
 		[switch] $ShowBuildOutputInNewWindow,
 
 		[parameter(Mandatory=$false)]
 		[switch] $ShowBuildOutputInCurrentWindow,
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
-		[Alias("Prompt")]
 		[switch] $PromptForInputBeforeClosing,
 
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
 
 		[parameter(Mandatory=$false)]
-		[Alias("Get","G")]
-		[switch] $GetLogPath
+		[switch] $WhatIf
 	)
 
 	BEGIN { }
@@ -208,10 +236,11 @@ function Invoke-MsBuild
 
         # Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
         if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
+		if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildErrorsLogOnFailure = $false }
         if (!(Test-Path Variable:Private:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
+		if (!(Test-Path Variable:Private:PromptForInputBeforeClosing)) { $PromptForInputBeforeClosing = $false }
         if (!(Test-Path Variable:Private:PassThru)) { $PassThru = $false }
-        if (!(Test-Path Variable:Private:ShowBuildOutputInCurrentWindow)) { $ShowBuildOutputInCurrentWindow = $false }
-
+		
 		# If the keyword was supplied, place the log in the same folder as the solution/project being built.
 		if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
 		{
@@ -227,34 +256,37 @@ function Invoke-MsBuild
 		# Local Variables.
 		$solutionFileName = (Get-ItemProperty -Path $Path).Name
 		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
-		$buildErrorsLogPath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbulid.errors.log"
+		$buildErrorsLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbulid.errors.log"
 		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
-		$buildCrashed = $false;
 
-		# If all we want is the path to the Log file that will be generated, return it.
-		if ($GetLogPath)
-		{
-			return $buildLogFilePath
-		}
+		# Build our object that will be returned.
+		$result = @{}
+		$result.BuildSucceeded = $null
+		$result.BuildLogFilePath = $buildLogFilePath
+		$result.BuildErrorsLogFilePath = $buildErrorsLogFilePath
+		$result.ItemToBuildFilePath = $Path
+		$result.CommandUsedToBuild = [string]::Empty
+		$result.Message = [string]::Empty
+		$result.MsBuildProcess = $null
 
 		# Try and build the solution.
 		try
 		{
 			# Build the arguments to pass to MsBuild.
-			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"" /fileLoggerParameters1:LogFile=""$buildErrorsLogPath"";errorsonly"
+			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"" /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
 
-			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause msbuild to hang for some reason).
+			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause MsBuild to hang for some reason).
 			if ($buildArguments -notlike '*UseSharedCompilation*')
 			{
 				$buildArguments += " /p:UseSharedCompilation=false " # prevent processes from hanging (Roslyn compiler?)
 			}
 
-			# If a VS Command Prompt was found, call MSBuild from that since it sets environmental variables that may be needed to build some projects.
+			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects.
 			if ($vsCommandPrompt -ne $null)
 			{
 				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPrompt"" & msbuild "
 			}
-			# Else the VS Command Prompt was not found, so just build using MSBuild directly.
+			# Else the VS Command Prompt was not found, so just build using MsBuild directly.
 			else
 			{
 				# Get the path to the MsBuild executable.
@@ -262,7 +294,7 @@ function Invoke-MsBuild
 				$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
 			}
 
-			# Append the MSBuild arguments to pass into cmd.exe in order to do the build.
+			# Append the MsBuild arguments to pass into cmd.exe in order to do the build.
 			$cmdArgumentsToRunMsBuild += "$buildArguments "
 			
 			# If necessary, add a pause to wait for input before exiting the cmd.exe window.
@@ -275,8 +307,19 @@ function Invoke-MsBuild
 			{ $pauseForInput = "Pause & " }
 			$cmdArgumentsToRunMsBuild += "& $pauseForInput Exit"" "
 
+			# Record the exact command used to perform the build to make it easier to troubleshoot issues with builds.
+			$result.CommandUsedToBuild = "cmd.exe $cmdArgumentsToRunMsBuild"
+			
+			# If we don't actually want to perform a build, return .
+			if ($WhatIf)
+			{
+				$result.BuildSucceeded = $null
+				$result.Message = "The '-WhatIf' switch was specified, so a build was not invoked."
+				return $result
+			}
+			
 			Write-Debug "Starting new cmd.exe process with arguments ""$cmdArgumentsToRunMsBuild""."
-
+			
 			# Perform the build.
 			if ($PassThru)
 			{
@@ -293,63 +336,86 @@ function Invoke-MsBuild
 			{
 				if ($ShowBuildOutputInCurrentWindow)
 				{
-					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
+					$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
 				}
 				else
 				{
-					$process = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
+					$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
 				}
-				$processExitCode = $process.ExitCode
 			}
 		}
+		# If the build crashed, return that the build didn't succeed.
 		catch
 		{
-			$buildCrashed = $true;
 			$errorMessage = $_
-			Write-Error ("Unexpected error occurred while building ""$Path"": $errorMessage");
-		}
-
-		# If the build crashed, return that the build didn't succeed.
-		if ($buildCrashed)
-		{
-			return $false
+			$result.Message = "Unexpected error occurred while building ""$Path"": $errorMessage"
+			$result.BuildSucceeded = $false
+			
+			Write-Error ($result.Message)			
+			return $result
 		}
 
         # If we can't find the build's log file in order to inspect it, write a warning and return null.
         if (!(Test-Path -Path $buildLogFilePath))
         {
-            Write-Warning "Cannot find the build log file at '$buildLogFilePath', so unable to determine if build succeeded or not."
-            return $null
+			$result.BuildSucceeded = $null
+			$result.Message = "Cannot find the build log file at '$buildLogFilePath', so unable to determine if build succeeded or not."
+			
+            Write-Warning ($result.Message)
+            return $result
         }
 
 		# Get if the build failed or not by looking at the log file.
-		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $processExitCode -eq 0)
+		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $result.MsBuildProcess.ExitCode -eq 0)
 
 		# If the build succeeded.
 		if ($buildSucceeded)
 		{
+			$result.BuildSucceeded = $true
+		
 			# If we shouldn't keep the log files around, delete them.
 			if (!$KeepBuildLogOnSuccessfulBuilds)
 			{
 				if (Test-Path $buildLogFilePath -PathType Leaf) { Remove-Item -Path $buildLogFilePath -Force }
-				if (Test-Path $buildErrorsLogPath -PathType Leaf) { Remove-Item -Path $buildErrorsLogPath -Force }
+				if (Test-Path $buildErrorsLogFilePath -PathType Leaf) { Remove-Item -Path $buildErrorsLogFilePath -Force }
 			}
 		}
 		# Else at least one of the projects failed to build.
 		else
 		{
+			$result.BuildSucceeded = $false
+			$result.Message = "FAILED to build ""$Path"". Please check the build log ""$buildLogFilePath"" for details."
+		
 			# Write the error message as a warning.
-			Write-Warning "FAILED to build ""$Path"". Please check the build log ""$buildLogFilePath"" for details." 
+			Write-Warning ($result.Message)
 
-			# If we should show the build log automatically, open it with the default viewer.
+			# If we should show the build logs automatically, open them with the default viewer.
 			if($AutoLaunchBuildLogOnFailure)
 			{
-				Start-Process -verb "Open" $buildLogFilePath;
+				Open-BuildLogFileWithDefaultProgram -FilePathToOpen $buildLogFilePath -Result $result
+			}
+			if($AutoLaunchBuildErrorsLogOnFailure)
+			{
+				Open-BuildLogFileWithDefaultProgram -FilePathToOpen $buildErrorsLogFilePath -Result $result
 			}
 		}
 
-		# Return if the Build Succeeded or Failed.
-		return $buildSucceeded
+		# Return the results of the build.
+		return $result
+	}
+}
+
+function Open-BuildLogFileWithDefaultProgram([string]$FilePathToOpen, [ref]$Result)
+{
+	if (Test-Path -Path $FilePathToOpen -PathType Leaf)
+	{ 
+		Start-Process -verb "Open" $FilePathToOpen
+	}
+	else
+	{ 
+		$message = "Could not auto-launch the build log because the expected file does not exist at '$FilePathToOpen'."
+		$Result.Message += [System.Environment]::NewLine + $message
+		Write-Warning $message
 	}
 }
 
@@ -393,33 +459,33 @@ function Get-MsBuildPath
 {
 <#
 	.SYNOPSIS
-	Gets the path to the latest version of MsBuild.exe. Throws an exception if MSBuild.exe is not found.
+	Gets the path to the latest version of MsBuild.exe. Throws an exception if MsBuild.exe is not found.
 	
 	.DESCRIPTION
-	Gets the path to the latest version of MsBuild.exe. Throws an exception if MSBuild.exe is not found.
+	Gets the path to the latest version of MsBuild.exe. Throws an exception if MsBuild.exe is not found.
 #>
 
-	# Get the path to the directory that the latest version of MSBuild is in.
-	$MsBuildToolsVersionsStrings = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\' | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
-	[double[]]$MsBuildToolsVersions = $MsBuildToolsVersionsStrings | ForEach-Object { [Convert]::ToDouble($_) }
-	$LargestMsBuildToolsVersion = $MsBuildToolsVersions | Sort-Object -Descending | Select-Object -First 1 
-	$MsBuildToolsVersionsKeyToUse = Get-Item -Path ('HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\{0:n1}' -f $LargestMsBuildToolsVersion)
-	$MsBuildDirectoryPath = $MsBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
+	# Get the path to the directory that the latest version of MsBuild is in.
+	$msBuildToolsVersionsStrings = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\' | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
+	[double[]]$msBuildToolsVersions = $msBuildToolsVersionsStrings | ForEach-Object { [Convert]::ToDouble($_) }
+	$LargestMsBuildToolsVersion = $msBuildToolsVersions | Sort-Object -Descending | Select-Object -First 1 
+	$msBuildToolsVersionsKeyToUse = Get-Item -Path ('HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\{0:n1}' -f $LargestMsBuildToolsVersion)
+	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
 
-	if(!$MsBuildDirectoryPath)
+	if(!$msBuildDirectoryPath)
 	{
 		throw 'MsBuild.exe was not found on the system.'          
 	}
 
-	# Get the path to the MSBuild executable.
-	$MsBuildPath = (Join-Path -Path $MsBuildDirectoryPath -ChildPath 'msbuild.exe')
+	# Get the path to the MsBuild executable.
+	$msBuildPath = (Join-Path -Path $msBuildDirectoryPath -ChildPath 'msbuild.exe')
 
-	if(!(Test-Path $MsBuildPath -PathType Leaf))
+	if(!(Test-Path $msBuildPath -PathType Leaf))
 	{
 		throw 'MsBuild.exe was not found on the system.'          
 	}
 
-	return $MsBuildPath
+	return $msBuildPath
 }
 
 Export-ModuleMember -Function Invoke-MsBuild
