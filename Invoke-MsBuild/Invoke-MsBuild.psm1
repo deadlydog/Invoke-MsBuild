@@ -173,7 +173,7 @@ function Invoke-MsBuild
 	Builds the given C# project, discarding the result object and not displaying its properties.
 	
 	.LINK
-	Project home: https://invokemsbuild.codeplex.com
+	Project home: https://github.com/deadlydog/Invoke-MsBuild
 	
 	.NOTES
 	Name:   Invoke-MsBuild
