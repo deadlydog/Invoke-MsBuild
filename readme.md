@@ -8,7 +8,7 @@ A PowerShell module to make building projects and solutions with MsBuild easy. I
 The module simply passes through any MsBuild command-line parameters you supply, so it supports all functionality (e.g. project types, targets, etc.) that you would get by calling MsBuild directly. The module builds using the Visual Studio Command Prompt when available in order to support more project types that MsBuild.exe alone may not support, such as XNA projects.
 
 # Getting Started
-You can either download the `Invoke-MsBuild.psm1` file from the [Releases page](Invoke-MsBuild/Invoke-MsBuild/Invoke-MsBuild.psm1) directly, or [install the module from the PowerShell Gallery](https://www.powershellgallery.com/packages/Invoke-MsBuild/).
+You can either download the `Invoke-MsBuild.psm1` file from the [Releases page](https://github.com/deadlydog/Invoke-MsBuild/releases) directly, or [install the module from the PowerShell Gallery](https://www.powershellgallery.com/packages/Invoke-MsBuild/).
 
 Here is an example of how to import the Invoke-MsBuild module into your powershell session and call it:
 
