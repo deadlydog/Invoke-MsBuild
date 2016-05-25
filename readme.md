@@ -19,7 +19,6 @@ Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
 # Examples
 
-### EXAMPLE
 ```
 $buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
@@ -34,7 +33,8 @@ else if ($buildResult.BuildSucceeded -eq $null)
 Perform the default MsBuild actions on the Visual Studio solution to build the projects in it, and returns a hash table containing the results.
 The PowerShell script will halt execution until MsBuild completes.
 
-### EXAMPLE
+---
+
 ```
 $process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 
@@ -49,7 +49,8 @@ Perform the default MsBuild actions on the Visual Studio solution to build the p
 The PowerShell script will not halt execution; instead it will return the process running MsBuild.exe back to the caller while the build is performed.
 You can check the process's HasExited property to check if the build has completed yet or not.
 
-### EXAMPLE
+---
+
 ```
 if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 {
@@ -58,7 +59,8 @@ if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 ```
 Perfom the build against the file specified at $pathToSolution and checks it for success in a single line.
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildOutputInNewWindow
 ```
@@ -66,7 +68,8 @@ Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/targ
 Cleans then Builds the given C# project.
 A window displaying the output from MsBuild will be shown so the user can view the progress of the build.
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\MySolution.sln" -Params "/target:Clean;Build /property:Configuration=Release;Platform=x64;BuildInParallel=true /verbosity:Detailed /maxcpucount"
 ```
@@ -74,7 +77,8 @@ Invoke-MsBuild -Path "C:\MySolution.sln" -Params "/target:Clean;Build /property:
 Cleans then Builds the given solution, specifying to build the project in parallel in the Release configuration for the x64 platform.
 Here the shorter "Params" alias is used instead of the full "MsBuildParameters" parameter name.
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLogOnFailure
 ```
@@ -84,7 +88,8 @@ A window displaying the output from MsBuild will be shown so the user can view t
 gives the window some input after the build completes. This function will also not return until the user gives the window some input, halting the powershell script execution.
 If the build fails, the build log will automatically be opened in the default text viewer.
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -KeepBuildLogOnSuccessfulBuilds -AutoLaunchBuildErrorsLogOnFailure
 ```
@@ -93,7 +98,8 @@ Builds the given C# project.
 The build log will be saved in "C:\BuildLogs", and they will not be automatically deleted even if the build succeeds.
 If the build fails, the build errors log will automatically be opened in the default text viewer.
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath PathDirectory
 ```
@@ -101,7 +107,8 @@ Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath Pa
 Builds the given C# project.
 The keyword 'PathDirectory' is used, so the build log will be saved in "C:\Some Folder\", which is the same directory as the project being built (i.e. directory specified in the Path).
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Database\Database.dbproj" -P "/t:Deploy /p:TargetDatabase=MyDatabase /p:TargetConnectionString=`"Data Source=DatabaseServerName`;Integrated Security=True`;Pooling=False`" /p:DeployToDatabase=True"
 ```
@@ -110,7 +117,8 @@ Deploy the Visual Studio Database Project to the database "MyDatabase".
 Here the shorter "P" alias is used instead of the full "MsBuildParameters" parameter name.
 The shorter alias' of the MsBuild parameters are also used; "/t" instead of "/target", and "/p" instead of "/property".
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -WhatIf
 ```
@@ -119,7 +127,8 @@ Returns the result object containing the same property values that would be crea
 The BuildSucceeded property will be $null since no build will actually be invoked.
 This will display all of the returned object's properties and their values.
 
-### EXAMPLE
+---
+
 ```
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" > $null
 ```

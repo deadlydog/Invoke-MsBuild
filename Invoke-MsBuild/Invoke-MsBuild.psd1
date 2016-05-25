@@ -95,10 +95,10 @@ PrivateData = @{
         Tags = @('Invoke', 'MsBuild', 'Invoke-MsBuild', 'Build', 'Compile')
 
         # A URL to the license for this module.
-        LicenseUri = 'https://invokemsbuild.codeplex.com/license'
+        LicenseUri = 'https://github.com/deadlydog/Invoke-MsBuild/blob/master/license.md'
 
         # A URL to the main website for this project.
-        ProjectUri = 'https://invokemsbuild.codeplex.com'
+        ProjectUri = 'https://github.com/deadlydog/Invoke-MsBuild'
 
         # A URL to an icon representing this module.
         # IconUri = ''
