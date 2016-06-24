@@ -20,6 +20,9 @@ function Invoke-MsBuild
 	
 	See http://msdn.microsoft.com/en-ca/library/vstudio/ms164311.aspx for valid MsBuild command-line parameters.
 	
+	.PARAMETER Use32BitMsBuild
+	If this switch is provided, the 32-bit version of MsBuild.exe will be used instead of the 64-bit version when both are available.
+	
 	.PARAMETER $BuildLogDirectoryPath
 	The directory path to write the build log files to.
 	Defaults to putting the log files in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
@@ -178,7 +181,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.0.0
+	Version: 2.1.0
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -190,6 +193,9 @@ function Invoke-MsBuild
 		[parameter(Mandatory=$false)]
 		[Alias("Parameters","Params","P")]
 		[string] $MsBuildParameters,
+
+		[parameter(Mandatory=$false)]
+		[switch] $Use32BitMsBuild,
 
 		[parameter(Mandatory=$false,HelpMessage="The directory path to write the build log file to. Use the keyword 'PathDirectory' to put the log file in the same directory as the .sln or project file being built.")]
 		[ValidateNotNullOrEmpty()]
@@ -249,10 +255,7 @@ function Invoke-MsBuild
 		
 		# Always get the full path to the Log files directory.
 		$BuildLogDirectoryPath = [System.IO.Path]::GetFullPath($BuildLogDirectoryPath)
-
-		# Store the VS Command Prompt to do the build in, if one exists.
-		$vsCommandPrompt = Get-VisualStudioCommandPromptPath
-
+		
 		# Local Variables.
 		$solutionFileName = (Get-ItemProperty -Path $Path).Name
 		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
@@ -281,16 +284,18 @@ function Invoke-MsBuild
 				$buildArguments += " /p:UseSharedCompilation=false " # prevent processes from hanging (Roslyn compiler?)
 			}
 
-			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects.
-			if ($vsCommandPrompt -ne $null)
+			# Get the path to the MsBuild executable.
+			$msBuildPath = Get-MsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
+
+			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
+			$vsCommandPromptPath = Get-VisualStudioCommandPromptPath
+			if ($vsCommandPromptPath -ne $null)
 			{
-				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPrompt"" & msbuild "
+				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPromptPath"" & ""$msBuildPath"" "
 			}
 			# Else the VS Command Prompt was not found, so just build using MsBuild directly.
 			else
 			{
-				# Get the path to the MsBuild executable.
-				$msBuildPath = Get-MsBuildPath
 				$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
 			}
 
@@ -455,7 +460,7 @@ function Get-VisualStudioCommandPromptPath
 	return $vsCommandPromptPath
 }
 
-function Get-MsBuildPath
+function Get-MsBuildPath([switch] $Use32BitMsBuild)
 {
 <#
 	.SYNOPSIS
@@ -465,16 +470,28 @@ function Get-MsBuildPath
 	Gets the path to the latest version of MsBuild.exe. Throws an exception if MsBuild.exe is not found.
 #>
 
+	$registryPathToMsBuildToolsVersions = 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\'
+	if ($Use32BitMsBuild)
+	{
+		# If the 32-bit path exists, use it, otherwise stick with the current path (which will be the 64-bit path on 64-bit machines, and the 32-bit path on 32-bit machines).
+		$registryPathTo32BitMsBuildToolsVersions = 'HKLM:\SOFTWARE\Wow6432Node\Microsoft\MSBuild\ToolsVersions\'
+		if (Test-Path -Path $registryPathTo32BitMsBuildToolsVersions)
+		{
+			$registryPathToMsBuildToolsVersions = $registryPathTo32BitMsBuildToolsVersions
+		}
+	}
+
 	# Get the path to the directory that the latest version of MsBuild is in.
-	$msBuildToolsVersionsStrings = Get-ChildItem -Path 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\' | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
+	$msBuildToolsVersionsStrings = Get-ChildItem -Path $registryPathToMsBuildToolsVersions | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
 	[double[]]$msBuildToolsVersions = $msBuildToolsVersionsStrings | ForEach-Object { [Convert]::ToDouble($_) }
 	$LargestMsBuildToolsVersion = $msBuildToolsVersions | Sort-Object -Descending | Select-Object -First 1 
-	$msBuildToolsVersionsKeyToUse = Get-Item -Path ('HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\{0:n1}' -f $LargestMsBuildToolsVersion)
+	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath ("{0:n1}" -f $LargestMsBuildToolsVersion)
+	$msBuildToolsVersionsKeyToUse = Get-Item -Path $registryPathToMsBuildToolsLatestVersion
 	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
 
 	if(!$msBuildDirectoryPath)
 	{
-		throw 'MsBuild.exe was not found on the system.'          
+		throw 'The registry on this system does not appear to contain the path to the MsBuild.exe directory.'
 	}
 
 	# Get the path to the MsBuild executable.
@@ -482,7 +499,7 @@ function Get-MsBuildPath
 
 	if(!(Test-Path $msBuildPath -PathType Leaf))
 	{
-		throw 'MsBuild.exe was not found on the system.'          
+		throw "MsBuild.exe was not found on this system at the path specified in the registry, '$msBuildPath'."
 	}
 
 	return $msBuildPath

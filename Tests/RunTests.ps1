@@ -21,6 +21,9 @@ $testNumber = 0
 Write-Host ("{0}. Build solution..." -f ++$testNumber)
 if ((Invoke-MsBuild -Path $pathToGoodSolution).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
+Write-Host ("{0}. Build solution using 32-bit MsBuild..." -f ++$testNumber)
+if ((Invoke-MsBuild -Path $pathToGoodSolution -Use32BitMsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+
 Write-Host ("{0}. Build solution via piping..." -f ++$testNumber)
 if (($pathToGoodSolution | Invoke-MsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
@@ -41,7 +44,7 @@ $process = Invoke-MsBuild -Path $pathToGoodSolution -PassThru
 while (!$process.HasExited)
 {
 	Write-Host "Solution is still buildling..."
-	Start-Sleep -Milliseconds 200
+	Start-Sleep -Milliseconds 250
 }
 
 Write-Host ("{0}. Using -ShowBuildOutputInNewWindow switch... Should see a new window that shows the build progress." -f ++$testNumber)
