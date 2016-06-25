@@ -168,6 +168,9 @@ Below is the module's help information. Once the module has been imported, this 
 	
 	See http://msdn.microsoft.com/en-ca/library/vstudio/ms164311.aspx for valid MsBuild command-line parameters.
 	
+	.PARAMETER Use32BitMsBuild
+	If this switch is provided, the 32-bit version of MsBuild.exe will be used instead of the 64-bit version when both are available.
+	
 	.PARAMETER $BuildLogDirectoryPath
 	The directory path to write the build log files to.
 	Defaults to putting the log files in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
