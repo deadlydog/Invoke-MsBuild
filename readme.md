@@ -329,4 +329,4 @@ Below is the module's help information. Once the module has been imported, this 
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.0.0
+	Version: 2.1.0
