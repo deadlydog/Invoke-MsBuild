@@ -483,9 +483,12 @@ function Get-MsBuildPath([switch] $Use32BitMsBuild)
 
 	# Get the path to the directory that the latest version of MsBuild is in.
 	$msBuildToolsVersionsStrings = Get-ChildItem -Path $registryPathToMsBuildToolsVersions | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
-	[double[]]$msBuildToolsVersions = $msBuildToolsVersionsStrings | ForEach-Object { [Convert]::ToDouble($_) }
-	$LargestMsBuildToolsVersion = $msBuildToolsVersions | Sort-Object -Descending | Select-Object -First 1 
-	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath ("{0:n1}" -f $LargestMsBuildToolsVersion)
+	
+    $msBuildToolsVersions = @{}
+	$msBuildToolsVersionsStrings | ForEach-Object { $msBuildToolsVersions[[Convert]::ToDouble($_)] = $_ }
+	$LargestMsBuildToolsVersion = $msBuildToolsVersions.GetEnumerator() | Sort-Object -Descending -Property Name | Select-Object -First 1 
+	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath $LargestMsBuildToolsVersion.Value
+
 	$msBuildToolsVersionsKeyToUse = Get-Item -Path $registryPathToMsBuildToolsLatestVersion
 	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
 
