@@ -181,7 +181,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.1.0
+	Version: 2.1.1
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -239,6 +239,9 @@ function Invoke-MsBuild
 		# 	This must come after a script's/function's param section.
 		# 	Forces a function to be the first non-comment code to appear in a PowerShell Script/Module.
 		Set-StrictMode -Version Latest
+		
+		# Ignore cultural differences. This is so that when reading version numbers it does not change the '.' to ',' when the OS's language/culture is not English.
+		[CultureInfo]::CurrentCulture = [CultureInfo]::InvariantCulture
 
         # Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
         if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
@@ -397,11 +400,11 @@ function Invoke-MsBuild
 			# If we should show the build logs automatically, open them with the default viewer.
 			if($AutoLaunchBuildLogOnFailure)
 			{
-				Open-BuildLogFileWithDefaultProgram -FilePathToOpen $buildLogFilePath -Result $result
+				Open-BuildLogFileWithDefaultProgram -FilePathToOpen $buildLogFilePath -Result ([ref]$result)
 			}
 			if($AutoLaunchBuildErrorsLogOnFailure)
 			{
-				Open-BuildLogFileWithDefaultProgram -FilePathToOpen $buildErrorsLogFilePath -Result $result
+				Open-BuildLogFileWithDefaultProgram -FilePathToOpen $buildErrorsLogFilePath -Result ([ref]$result)
 			}
 		}
 

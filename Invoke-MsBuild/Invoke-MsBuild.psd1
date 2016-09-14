@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.1.0'
+ModuleVersion = '2.1.1'
 
 # ID used to uniquely identify this module
 GUID = '8ca20938-b92a-42a1-bf65-f644e16a8d9e'
@@ -104,7 +104,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Added new Use32BitMsBuild parameter to allow users to force the 32-bit version of MsBuild.exe to be used instead of the 64-bit version when both are available.
+        ReleaseNotes = '- Fixed some bugs that prevented module from running properly when using a non-English OS.
 
 ----------
 Invoke-MsBuild v2 has the following breaking changes from v1:
