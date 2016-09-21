@@ -71,6 +71,9 @@ function Invoke-MsBuild
 	execution while the build is performed, and also to inspect the process to see when it completes.
 	NOTE: This switch cannot be used with the AutoLaunchBuildLogOnFailure, AutoLaunchBuildErrorsLogOnFailure, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
 	
+    .PARAMETER LogVerbosity
+    If set, this will set the verbosity of the build log. Possible values are: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic].
+
 	.PARAMETER WhatIf
 	If set, the build will not actually be performed.
 	Instead it will just return the result object containing the file paths that would be created if the build is performed with the same parameters.
@@ -202,6 +205,9 @@ function Invoke-MsBuild
 		[Alias("LogDirectory","L")]
 		[string] $BuildLogDirectoryPath = $env:Temp,
 
+        [parameter(Mandatory=$false)]
+        [string] $LogVerbosityLevel = $null,
+
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
 		[switch] $AutoLaunchBuildLogOnFailure,
@@ -279,7 +285,16 @@ function Invoke-MsBuild
 		try
 		{
 			# Build the arguments to pass to MsBuild.
-			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath"" /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
+            $verbosityLevel = switch ($LogVerbosityLevel) { 
+                { ($_ -eq "q")    -or ($_ -eq "quiet") -or `
+                  ($_ -eq "m")    -or ($_ -eq "minimal") -or `
+                  ($_ -eq "n")    -or ($_ -eq "normal") -or `
+                  ($_ -eq "d")    -or ($_ -eq "detailed") -or `
+                  ($_ -eq "diag") -or ($_ -eq "diagnostic") } { ";verbosity=$_" ;break }
+                default { "" }
+            }
+
+			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath""$verbosityLevel /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
 
 			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause MsBuild to hang for some reason).
 			if ($buildArguments -notlike '*UseSharedCompilation*')
