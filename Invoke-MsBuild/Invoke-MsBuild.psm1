@@ -117,8 +117,7 @@ function Invoke-MsBuild
 	The PowerShell script will not halt execution; instead it will return the process running MsBuild.exe back to the caller while the build is performed.
 	You can check the process's HasExited property to check if the build has completed yet or not.
 	
-	.EXAMPLE
-	
+	.EXAMPLE	
 	if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 	{
 		Write-Host "Build completed successfully."
@@ -184,7 +183,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.1.1
+	Version: 2.2.0
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -206,7 +205,8 @@ function Invoke-MsBuild
 		[string] $BuildLogDirectoryPath = $env:Temp,
 
         [parameter(Mandatory=$false)]
-        [string] $LogVerbosityLevel = $null,
+		[ValidateSet('q','quiet','m','minimal','n','normal','d','detailed','diag','diagnostic')]
+        [string] $LogVerbosityLevel = 'normal',
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
@@ -293,7 +293,7 @@ function Invoke-MsBuild
                   ($_ -eq "diag") -or ($_ -eq "diagnostic") } { ";verbosity=$_" ;break }
                 default { "" }
             }
-
+			
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath""$verbosityLevel /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
 
 			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause MsBuild to hang for some reason).
@@ -503,8 +503,8 @@ function Get-MsBuildPath([switch] $Use32BitMsBuild)
 	$msBuildToolsVersionsStrings = Get-ChildItem -Path $registryPathToMsBuildToolsVersions | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
 	$msBuildToolsVersions = @{}
 	$msBuildToolsVersionsStrings | ForEach-Object {$msBuildToolsVersions.Add($_ -as [double], $_)}
-	$LargestMsBuildToolsVersion = ($msBuildToolsVersions.GetEnumerator() | Sort-Object -Descending -Property Name | Select-Object -First 1).Value
-	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath ("{0:n1}" -f $LargestMsBuildToolsVersion)
+	$largestMsBuildToolsVersion = ($msBuildToolsVersions.GetEnumerator() | Sort-Object -Descending -Property Name | Select-Object -First 1).Value
+	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath ("{0:n1}" -f $largestMsBuildToolsVersion)
 	$msBuildToolsVersionsKeyToUse = Get-Item -Path $registryPathToMsBuildToolsLatestVersion
 	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
 

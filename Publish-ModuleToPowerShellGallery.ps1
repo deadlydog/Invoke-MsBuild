@@ -1,4 +1,11 @@
-﻿# Get the directory that this script is in.
+﻿param
+(
+	[Parameter(Mandatory=$true)]
+	[ValidateNotNullOrEmpty()]
+	[string]$NuGetApiKey
+)
+
+# Get the directory that this script is in.
 $THIS_SCRIPTS_DIRECTORY = Split-Path $script:MyInvocation.MyCommand.Path
 
 $moduleDirectory = Join-Path $THIS_SCRIPTS_DIRECTORY 'Invoke-MsBuild'
@@ -204,4 +211,4 @@ Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestVe
 Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestReleaseNotesLine -replacementText $newManifestReleaseNotesLine
 
 # Publish the new version of the module to the PowerShell Gallery.
-Publish-Module -Path $moduleDirectory
+Publish-Module -Path $moduleDirectory -NuGetApiKey $NuGetApiKey
