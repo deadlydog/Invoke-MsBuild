@@ -23,7 +23,7 @@ function Invoke-MsBuild
 	.PARAMETER Use32BitMsBuild
 	If this switch is provided, the 32-bit version of MsBuild.exe will be used instead of the 64-bit version when both are available.
 	
-	.PARAMETER $BuildLogDirectoryPath
+	.PARAMETER BuildLogDirectoryPath
 	The directory path to write the build log files to.
 	Defaults to putting the log files in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
 	Use the keyword "PathDirectory" to put the log files in the same directory as the .sln or project file being built.
@@ -283,8 +283,8 @@ function Invoke-MsBuild
 
 		# Try and build the solution.
 		try
-		{
-			# Build the arguments to pass to MsBuild.
+		{			
+			# Get the verbosity to use for the MsBuild log file.
             $verbosityLevel = switch ($LogVerbosityLevel) { 
                 { ($_ -eq "q")    -or ($_ -eq "quiet") -or `
                   ($_ -eq "m")    -or ($_ -eq "minimal") -or `
@@ -294,6 +294,7 @@ function Invoke-MsBuild
                 default { "" }
             }
 			
+			# Build the arguments to pass to MsBuild.
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath""$verbosityLevel /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
 
 			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause MsBuild to hang for some reason).

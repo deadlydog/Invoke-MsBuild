@@ -171,7 +171,7 @@ Below is the module's help information. Once the module has been imported, this 
 	.PARAMETER Use32BitMsBuild
 	If this switch is provided, the 32-bit version of MsBuild.exe will be used instead of the 64-bit version when both are available.
 	
-	.PARAMETER $BuildLogDirectoryPath
+	.PARAMETER BuildLogDirectoryPath
 	The directory path to write the build log files to.
 	Defaults to putting the log files in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
 	Use the keyword "PathDirectory" to put the log files in the same directory as the .sln or project file being built.
