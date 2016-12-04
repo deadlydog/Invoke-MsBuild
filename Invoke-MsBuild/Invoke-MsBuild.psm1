@@ -280,6 +280,7 @@ function Invoke-MsBuild
 		$result.CommandUsedToBuild = [string]::Empty
 		$result.Message = [string]::Empty
 		$result.MsBuildProcess = $null
+		$result.MsBuildHandle = $null
 
 		# Try and build the solution.
 		try
@@ -349,12 +350,15 @@ function Invoke-MsBuild
 			{
 				if ($ShowBuildOutputInCurrentWindow)
 				{
-					return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -PassThru
+					$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -PassThru
 				}
 				else
 				{
-					return Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -PassThru
+					$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -PassThru
 				}
+
+                $result.MsBuildHandle = $result.MsBuildProcess.Handle
+                $result.MsBuildProcess.WaitForExit()
 			}
 			else
 			{
@@ -389,8 +393,22 @@ function Invoke-MsBuild
             return $result
         }
 
+		# Get the MsBuild exit code, as it will often be non-zero on failures.
+		$buildExitCode = 0
+        if ($PassThru)
+        {
+            if ($result.MsBuildProcess.ExitCode -ne $null)
+            {
+                $buildExitCode = $result.MsBuildProcess.ExitCode
+            }
+        }
+        else
+        {
+            $buildExitCode = $result.MsBuildProcess.ExitCode
+        }
+
 		# Get if the build failed or not by looking at the log file.
-		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $result.MsBuildProcess.ExitCode -eq 0)
+		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $buildExitCode -eq 0)
 
 		# If the build succeeded.
 		if ($buildSucceeded)
