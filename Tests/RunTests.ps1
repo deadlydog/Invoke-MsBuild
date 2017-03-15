@@ -52,3 +52,6 @@ Invoke-MsBuild -Path $pathToGoodSolution -ShowBuildOutputInNewWindow > $null
 
 Write-Host ("{0}. Using -ShowBuildOutputInCurrentWindow switch... Should see build progress in this window (when ran from regular PowerShell console window)." -f ++$testNumber)
 Invoke-MsBuild -Path $pathToGoodSolution -ShowBuildOutputInCurrentWindow > $null
+
+Write-Host ("{0}. Build solution in parallel using MsBuild /m switch..." -f ++$testNumber)
+if ((Invoke-MsBuild -Path $pathToGoodSolution -MsBuildParameters '/m').BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
