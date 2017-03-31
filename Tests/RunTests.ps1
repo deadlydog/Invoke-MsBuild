@@ -4,7 +4,7 @@
 Set-StrictMode -Version Latest
 
 # Clear the screen before running our tests.
-cls
+Clear-Host
 
 # Get the directory that this script is in.
 $THIS_SCRIPTS_DIRECTORY = Split-Path $script:MyInvocation.MyCommand.Path
@@ -12,8 +12,8 @@ $THIS_SCRIPTS_DIRECTORY = Split-Path $script:MyInvocation.MyCommand.Path
 # Import Invoke-MsBuild. Use -Force to make sure we reload it in case we have been making changes to it.
 Import-Module -Name (Join-Path (Join-Path (Split-Path -Path $THIS_SCRIPTS_DIRECTORY -Parent) 'Invoke-MsBuild') 'Invoke-MsBuild.psm1') -Force
 
-$pathToGoodSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "SolutionThatShouldBuildSuccessfully\SolutionThatShouldBuildSuccessfully.sln")
-$pathToBrokenSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "SolutionThatShouldFailBuild\SolutionThatShouldFailBuild.sln")
+$pathToGoodSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "Solution That Should Build Successfully\SolutionThatShouldBuildSuccessfully.sln")
+$pathToBrokenSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "Solution That Should Fail Build\SolutionThatShouldFailBuild.sln")
 $invalidPath = (Join-Path $THIS_SCRIPTS_DIRECTORY "invalid\path")
 
 $testNumber = 0
