@@ -489,6 +489,66 @@ function Get-MsBuildPath([switch] $Use32BitMsBuild)
 	Gets the path to the latest version of MsBuild.exe. Throws an exception if MsBuild.exe is not found.
 #>
 
+	[string] $msBuildPath = $null
+	$msBuildPath = Get-MsBuildPathOfVisualStudio2017AndNewer -Use32BitMsBuild $Use32BitMsBuild
+
+	# If VS 2017 or newer MsBuild.exe was not found, check for older versions of MsBuild.
+	if ([string]::IsNullOrEmpty($msBuildPath))
+	{
+		$msBuildPath = Get-MsBuildPathOfVisualStudio2015AndPrior -Use32BitMsBuild $Use32BitMsBuild
+	}
+
+	[bool] $msBuildPathWasNotFound = [string]::IsNullOrEmpty($msBuildPath)
+	if ($msBuildPathWasNotFound)
+	{
+		throw 'Could not determine where to find MsBuild.exe.'
+	}
+
+	[bool] $msBuildExistsAtThePathFound = (Test-Path $msBuildPath -PathType Leaf)
+	if(!$msBuildExistsAtThePathFound)
+	{
+		throw "MsBuild.exe does not exist at the expected path, '$msBuildPath'."
+	}
+
+	return $msBuildPath
+}
+
+function Get-MsBuildPathOfVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
+{
+	# Later we can probably make use of the VSSetup.PowerShell module to find the MsBuild.exe: https://github.com/Microsoft/vssetup.powershell
+	# Or perhaps the VsWhere.exe: https://github.com/Microsoft/vswhere
+	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselve in known locations.
+	# Example of known locations:
+	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe" - 32 bit
+	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\amd64\MSBuild.exe" - 64 bit
+
+	[string] $programFilesDirectory = Get-Item 'Env:\CommonProgramFiles(x86)' | Select-Object -ExpandProperty Value
+	if ([string]::IsNullOrEmpty($programFilesDirectory)) 
+	{
+		$programFilesDirectory = 'C:\Program Files (x86)'
+	}
+
+	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
+	[bool] $visualStudioDirectoryPathExists = (Test-Path -Path $visualStudioDirectoryPath -PathType Container)
+	if (!$visualStudioDirectoryPathExists) 
+	{ 
+		return $null 
+	}
+
+	$msBuildPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'MsBuild.exe' }
+
+	$msBuild32BitPath = $msBuildPathObjects | Where-Object { $_.Parent.Name -ieq 'amd64' } | Select-Object -Property FullName -First 1
+	$msBuild64BitPath = $msBuildPathObjects | Where-Object { $_.Parent.Name -ine 'amd64' } | Select-Object -Property FullName -First 1
+
+	if ($Use32BitMsBuild)
+	{
+		return $msBuild32BitPath
+	}
+	return $msBuild64BitPath
+}
+
+function Get-MsBuildPathOfVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
+{
 	$registryPathToMsBuildToolsVersions = 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\'
 	if ($Use32BitMsBuild)
 	{
@@ -507,20 +567,15 @@ function Get-MsBuildPath([switch] $Use32BitMsBuild)
 	$largestMsBuildToolsVersion = ($msBuildToolsVersions.GetEnumerator() | Sort-Object -Descending -Property Name | Select-Object -First 1).Value
 	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath ("{0:n1}" -f $largestMsBuildToolsVersion)
 	$msBuildToolsVersionsKeyToUse = Get-Item -Path $registryPathToMsBuildToolsLatestVersion
-	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select -ExpandProperty 'MSBuildToolsPath'
+	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select-Object -ExpandProperty 'MSBuildToolsPath'
 
 	if(!$msBuildDirectoryPath)
 	{
-		throw 'The registry on this system does not appear to contain the path to the MsBuild.exe directory.'
+		return $null
 	}
 
-	# Get the path to the MsBuild executable.
+	# Build the expected path to the MsBuild executable.
 	$msBuildPath = (Join-Path -Path $msBuildDirectoryPath -ChildPath 'msbuild.exe')
-
-	if(!(Test-Path $msBuildPath -PathType Leaf))
-	{
-		throw "MsBuild.exe was not found on this system at the path specified in the registry, '$msBuildPath'."
-	}
 
 	return $msBuildPath
 }
