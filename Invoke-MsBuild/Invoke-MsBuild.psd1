@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.3.0'
+ModuleVersion = '2.3.1'
 
 # ID used to uniquely identify this module
 GUID = '8ca20938-b92a-42a1-bf65-f644e16a8d9e'
@@ -104,7 +104,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Added support for VS/MsBuild 2017.
+        ReleaseNotes = '- Fixed to actually add support for VS/MsBuild 2017.
 
 ----------
 Invoke-MsBuild v2 has the following breaking changes from v1:
