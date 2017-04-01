@@ -304,10 +304,10 @@ function Invoke-MsBuild
 			}
 
 			# Get the path to the MsBuild executable.
-			$msBuildPath = Get-MsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
+			$msBuildPath = Get-LatestMsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
 
 			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
-			$vsCommandPromptPath = Get-VisualStudioCommandPromptPath
+			$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
 			if ($vsCommandPromptPath -ne $null)
 			{
 				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPromptPath"" & ""$msBuildPath"" "
@@ -443,7 +443,7 @@ function Open-BuildLogFileWithDefaultProgram([string]$FilePathToOpen, [ref]$Resu
 	}
 }
 
-function Get-VisualStudioCommandPromptPath
+function Get-LatestVisualStudioCommandPromptPath
 {
 <#
 	.SYNOPSIS
@@ -452,34 +452,83 @@ function Get-VisualStudioCommandPromptPath
 	.DESCRIPTION
 		Gets the file path to the latest Visual Studio Command Prompt. Returns $null if a path is not found.
 #>
+	[string] $vsCommandPromptPath = $null
+	$vsCommandPromptPath = Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 
+	# If VS 2017 or newer VS Command Prompt was not found, check for older versions of VS Command Prompt.
+	if ([string]::IsNullOrEmpty($vsCommandPromptPath))
+	{
+		$vsCommandPromptPath = Get-VisualStudioCommandPromptPathForVisualStudio2015AndPrior
+	}
+
+	[bool] $vsCommandPromptPathWasNotFound = [string]::IsNullOrEmpty($vsCommandPromptPath)
+	if ($vsCommandPromptPathWasNotFound)
+	{
+		return $null
+	}
+
+	return $vsCommandPromptPath
+}
+
+function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
+{
+	# Later we can probably make use of the VSSetup.PowerShell module to find the MsBuild.exe: https://github.com/Microsoft/vssetup.powershell
+	# Or perhaps the VsWhere.exe: https://github.com/Microsoft/vswhere
+	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselve in known locations.
+	# Example of known locations:
+	#	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
+
+	[string] $visualStudioDirectoryPath = Get-CommonVisualStudioDirectoryPath
+	[bool] $visualStudioDirectoryPathExists = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
+	if (!$visualStudioDirectoryPathExists)
+	{ 
+		return $null 
+	}
+
+	# First search for the VS Command Prompt in the expected locations (faster).
+	$expectedVsCommandPromptPathWithWildcards = "$visualStudioDirectoryPath\*\*\Common7\Tools\VsDevCmd.bat"
+	$vsCommandPromptPathObjects = Get-Item -Path $expectedVsCommandPromptPathWithWildcards
+
+	[bool] $vsCommandPromptWasNotFound = ($vsCommandPromptPathObjects -eq $null) -or ($vsCommandPromptPathObjects.Length -eq 0)
+	if ($vsCommandPromptWasNotFound)
+	{
+		# Recurisvely search the entire Microsoft Visual Studio directory for the VS Command Prompt (slower, but will still work if MS changes folder structure).
+		Write-Verbose "The Visual Studio Command Prompt was not found at an expected location. Searching more locations, but this will be a little slow."
+		$vsCommandPromptPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'VsDevCmd.bat' }
+	}
+
+	$vsCommandPromptPathObjectsSortedWithNewestVersionsFirst = $vsCommandPromptPathObjects | Sort-Object -Property FullName -Descending
+
+	$newestVsCommandPromptPath = $vsCommandPromptPathObjectsSortedWithNewestVersionsFirst | Select-Object -ExpandProperty FullName -First 1
+	return $newestVsCommandPromptPath
+}
+
+function Get-VisualStudioCommandPromptPathForVisualStudio2015AndPrior
+{
 	# Get some environmental paths.
 	$vs2015CommandPromptPath = $env:VS140COMNTOOLS + 'VsDevCmd.bat'
 	$vs2013CommandPromptPath = $env:VS120COMNTOOLS + 'VsDevCmd.bat'
 	$vs2012CommandPromptPath = $env:VS110COMNTOOLS + 'VsDevCmd.bat'
 	$vs2010CommandPromptPath = $env:VS100COMNTOOLS + 'vcvarsall.bat'
-	$vsCommandPromptPaths = @($vs2015CommandPromptPath, $vs2013CommandPromptPath, $vs2012CommandPromptPath, $vs2010CommandPromptPath)
+	$potentialVsCommandPromptPaths = @($vs2015CommandPromptPath, $vs2013CommandPromptPath, $vs2012CommandPromptPath, $vs2010CommandPromptPath)
 
 	# Store the VS Command Prompt to do the build in, if one exists.
-	$vsCommandPromptPath = $null
-	foreach ($path in $vsCommandPromptPaths)
+	$newestVsCommandPromptPath = $null
+	foreach ($path in $potentialVsCommandPromptPaths)
 	{
-		try
+		[bool] $pathExists = (![string]::IsNullOrEmpty($path)) -and (Test-Path -Path $path -PathType Leaf)
+		if ($pathExists)
 		{
-			if (Test-Path -Path $path)
-			{
-				$vsCommandPromptPath = $path
-				break
-			}
+			$newestVsCommandPromptPath = $path
+			break
 		}
-		catch {}
 	}
 
 	# Return the path to the VS Command Prompt if it was found.
-	return $vsCommandPromptPath
+	return $newestVsCommandPromptPath
 }
 
-function Get-MsBuildPath([switch] $Use32BitMsBuild)
+function Get-LatestMsBuildPath([switch] $Use32BitMsBuild)
 {
 <#
 	.SYNOPSIS
@@ -490,12 +539,12 @@ function Get-MsBuildPath([switch] $Use32BitMsBuild)
 #>
 
 	[string] $msBuildPath = $null
-	$msBuildPath = Get-MsBuildPathOfVisualStudio2017AndNewer -Use32BitMsBuild $Use32BitMsBuild
+	$msBuildPath = Get-MsBuildPathForVisualStudio2017AndNewer -Use32BitMsBuild $Use32BitMsBuild
 
 	# If VS 2017 or newer MsBuild.exe was not found, check for older versions of MsBuild.
 	if ([string]::IsNullOrEmpty($msBuildPath))
 	{
-		$msBuildPath = Get-MsBuildPathOfVisualStudio2015AndPrior -Use32BitMsBuild $Use32BitMsBuild
+		$msBuildPath = Get-MsBuildPathForVisualStudio2015AndPrior -Use32BitMsBuild $Use32BitMsBuild
 	}
 
 	[bool] $msBuildPathWasNotFound = [string]::IsNullOrEmpty($msBuildPath)
@@ -513,7 +562,7 @@ function Get-MsBuildPath([switch] $Use32BitMsBuild)
 	return $msBuildPath
 }
 
-function Get-MsBuildPathOfVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
+function Get-MsBuildPathForVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
 {
 	# Later we can probably make use of the VSSetup.PowerShell module to find the MsBuild.exe: https://github.com/Microsoft/vssetup.powershell
 	# Or perhaps the VsWhere.exe: https://github.com/Microsoft/vswhere
@@ -522,32 +571,39 @@ function Get-MsBuildPathOfVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe" - 32 bit
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\amd64\MSBuild.exe" - 64 bit
 
-	[string] $programFilesDirectory = Get-Item 'Env:\CommonProgramFiles(x86)' | Select-Object -ExpandProperty Value
-	if ([string]::IsNullOrEmpty($programFilesDirectory)) 
-	{
-		$programFilesDirectory = 'C:\Program Files (x86)'
-	}
-
-	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
-	[bool] $visualStudioDirectoryPathExists = (Test-Path -Path $visualStudioDirectoryPath -PathType Container)
+	[string] $visualStudioDirectoryPath = Get-CommonVisualStudioDirectoryPath
+	[bool] $visualStudioDirectoryPathExists = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
 	if (!$visualStudioDirectoryPathExists) 
 	{ 
 		return $null 
 	}
 
-	$msBuildPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'MsBuild.exe' }
+	# First search for MsBuild in the expected 32 and 64 bit locations (faster).
+	$expected32bitPathWithWildcards = "$visualStudioDirectoryPath\*\*\MsBuild\*\Bin\MsBuild.exe"
+	$expected64bitPathWithWildcards = "$visualStudioDirectoryPath\*\*\MsBuild\*\Bin\amd64\MsBuild.exe"
+	$msBuildPathObjects = Get-Item -Path $expected32bitPathWithWildcards, $expected64bitPathWithWildcards
 
-	$msBuild32BitPath = $msBuildPathObjects | Where-Object { $_.Parent.Name -ieq 'amd64' } | Select-Object -Property FullName -First 1
-	$msBuild64BitPath = $msBuildPathObjects | Where-Object { $_.Parent.Name -ine 'amd64' } | Select-Object -Property FullName -First 1
+	[bool] $msBuildWasNotFound = ($msBuildPathObjects -eq $null) -or ($msBuildPathObjects.Length -eq 0)
+	if ($msBuildWasNotFound)
+	{
+		# Recurisvely search the entire Microsoft Visual Studio directory for MsBuild (slower, but will still work if MS changes folder structure).
+		Write-Verbose "MsBuild.exe was not found at an expected location. Searching more locations, but this will be a little slow."
+		$msBuildPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'MsBuild.exe' }
+	}
+
+	$msBuildPathObjectsSortedWithNewestVersionsFirst = $msBuildPathObjects | Sort-Object -Property FullName -Descending
+
+	$newest32BitMsBuildPath = $msBuildPathObjectsSortedWithNewestVersionsFirst | Where-Object { $_.Directory.Name -ine 'amd64' } | Select-Object -ExpandProperty FullName -First 1
+	$newest64BitMsBuildPath = $msBuildPathObjectsSortedWithNewestVersionsFirst | Where-Object { $_.Directory.Name -ieq 'amd64' } | Select-Object -ExpandProperty FullName -First 1
 
 	if ($Use32BitMsBuild)
 	{
-		return $msBuild32BitPath
+		return $newest32BitMsBuildPath
 	}
-	return $msBuild64BitPath
+	return $newest64BitMsBuildPath
 }
 
-function Get-MsBuildPathOfVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
+function Get-MsBuildPathForVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
 {
 	$registryPathToMsBuildToolsVersions = 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\'
 	if ($Use32BitMsBuild)
@@ -578,6 +634,24 @@ function Get-MsBuildPathOfVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
 	$msBuildPath = (Join-Path -Path $msBuildDirectoryPath -ChildPath 'msbuild.exe')
 
 	return $msBuildPath
+}
+
+function Get-CommonVisualStudioDirectoryPath
+{
+	[string] $programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)' | Select-Object -ExpandProperty Value
+	if ([string]::IsNullOrEmpty($programFilesDirectory)) 
+	{
+		$programFilesDirectory = 'C:\Program Files (x86)'
+	}
+
+	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
+
+	[bool] $visualStudioDirectoryPathExists = (Test-Path -Path $visualStudioDirectoryPath -PathType Container)
+	if (!$visualStudioDirectoryPathExists)
+	{
+		return $null
+	}
+	return $visualStudioDirectoryPath 
 }
 
 Export-ModuleMember -Function Invoke-MsBuild
