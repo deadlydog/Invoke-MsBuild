@@ -24,8 +24,8 @@ When the -PassThru switch is not provided, a hash table with the following prope
 * BuildSucceeded = $true if the build passed, $false if the build failed, and $null if we are not sure.
 * BuildLogFilePath = The path to the build's log file.
 * BuildErrorsLogFilePath = The path to the build's error log file.
-* ItemToBuildFilePath = The item that MsBuild is ran against.
-* CommandUsedToBuild = The full command that is used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
+* ItemToBuildFilePath = The item that MsBuild ran against.
+* CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
 * Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
 * MsBuildProcess = The process that was used to execute MsBuild.exe.
 

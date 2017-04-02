@@ -28,6 +28,9 @@ function Invoke-MsBuild
 	Defaults to putting the log files in the users temp directory (e.g. C:\Users\[User Name]\AppData\Local\Temp).
 	Use the keyword "PathDirectory" to put the log files in the same directory as the .sln or project file being built.
 	Two log files are generated: one with the complete build log, and one that contains only errors from the build.
+
+	.PARAMETER LogVerbosity
+	If set, this will set the verbosity of the build log. Possible values are: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic].
 	
 	.PARAMETER AutoLaunchBuildLogOnFailure
 	If set, this switch will cause the build log to automatically be launched into the default viewer if the build fails.
@@ -64,15 +67,21 @@ function Invoke-MsBuild
 	NOTE: The user will need to provide input before execution will return back to the calling script (so do not use this switch for automated builds).
 	NOTE: To avoid the build process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running 
 		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
+	
+	.PARAMETER MsBuildFilePath
+	By default this script will locate and use the latest version of MsBuild.exe on the machine.
+	If you have MsBuild.exe in a non-standard location, or want to force the use of an older MsBuild.exe version, you may pass in the file path of the MsBuild.exe to use.
+
+	.PARAMETER VisualStudioDeveloperCommandPromptFilePath
+	By default this script will locate and use the latest version of the Visual Studio Developer Command Prompt to run MsBuild.
+	If you installed Visual Studio in a non-standard location, or want to force the use of an older Visual Studio Command Prompt version, you may pass in the file path to 
+	the Visual Studio Command Prompt to use. The filename is typically VsDevCmd.bat.
 
 	.PARAMETER PassThru
 	If set, this switch will cause the calling script not to wait until the build (launched in another process) completes before continuing execution.
 	Instead the build will be started in a new process and that process will immediately be returned, allowing the calling script to continue 
 	execution while the build is performed, and also to inspect the process to see when it completes.
 	NOTE: This switch cannot be used with the AutoLaunchBuildLogOnFailure, AutoLaunchBuildErrorsLogOnFailure, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
-	
-	.PARAMETER LogVerbosity
-	If set, this will set the verbosity of the build log. Possible values are: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic].
 
 	.PARAMETER WhatIf
 	If set, the build will not actually be performed.
@@ -86,8 +95,8 @@ function Invoke-MsBuild
 	BuildSucceeded = $true if the build passed, $false if the build failed, and $null if we are not sure.
 	BuildLogFilePath = The path to the build's log file.
 	BuildErrorsLogFilePath = The path to the build's error log file.
-	ItemToBuildFilePath = The item that MsBuild is ran against.
-	CommandUsedToBuild = The full command that is used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
+	ItemToBuildFilePath = The item that MsBuild ran against.
+	CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
 	Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
 	MsBuildProcess = The process that was used to execute MsBuild.exe.
 	
@@ -230,6 +239,14 @@ function Invoke-MsBuild
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[switch] $PromptForInputBeforeClosing,
 
+		[parameter(Mandatory=$false)]
+		[ValidateScript({Test-Path $_})]
+		[string] $MsBuildFilePath,
+
+		[parameter(Mandatory=$false)]
+		[ValidateScript({Test-Path $_})]
+		[string] $VisualStudioDeveloperCommandPromptFilePath,		
+
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
 
@@ -304,11 +321,24 @@ function Invoke-MsBuild
 			}
 
 			# Get the path to the MsBuild executable.
-			$msBuildPath = Get-LatestMsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
+			$msBuildPath = $MsBuildFilePath
+			[bool] $msBuildPathWasNotProvided = [string]::IsNullOrEmpty($msBuildPath)
+			if ($msBuildPathWasNotProvided)
+			{
+				$msBuildPath = Get-LatestMsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
+			}
+
+			# Get the path to the Visual Studio Developer Command Prompt file.
+			$vsCommandPromptPath = $VisualStudioDeveloperCommandPromptFilePath
+			[bool] $vsCommandPromptPathWasNotProvided = [string]::IsNullOrEmpty($vsCommandPromptPath)
+			if ($vsCommandPromptPathWasNotProvided)
+			{
+				$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
+			}
 
 			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
-			$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
-			if ($vsCommandPromptPath -ne $null)
+			[bool] $vsCommandPromptPathWasFound = ![string]::IsNullOrEmpty($vsCommandPromptPath)
+			if ($vsCommandPromptPathWasFound)
 			{
 				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPromptPath"" & ""$msBuildPath"" "
 			}
@@ -452,19 +482,12 @@ function Get-LatestVisualStudioCommandPromptPath
 	.DESCRIPTION
 		Gets the file path to the latest Visual Studio Command Prompt. Returns $null if a path is not found.
 #>
-	[string] $vsCommandPromptPath = $null
-	$vsCommandPromptPath = Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
+	[string] $vsCommandPromptPath = Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 
 	# If VS 2017 or newer VS Command Prompt was not found, check for older versions of VS Command Prompt.
 	if ([string]::IsNullOrEmpty($vsCommandPromptPath))
 	{
 		$vsCommandPromptPath = Get-VisualStudioCommandPromptPathForVisualStudio2015AndPrior
-	}
-
-	[bool] $vsCommandPromptPathWasNotFound = [string]::IsNullOrEmpty($vsCommandPromptPath)
-	if ($vsCommandPromptPathWasNotFound)
-	{
-		return $null
 	}
 
 	return $vsCommandPromptPath
@@ -479,8 +502,8 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 	#	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
 
 	[string] $visualStudioDirectoryPath = Get-CommonVisualStudioDirectoryPath
-	[bool] $visualStudioDirectoryPathExists = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
-	if (!$visualStudioDirectoryPathExists)
+	[bool] $visualStudioDirectoryPathDoesNotExist = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
+	if ($visualStudioDirectoryPathDoesNotExist)
 	{ 
 		return $null 
 	}
@@ -572,8 +595,8 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\amd64\MSBuild.exe" - 64 bit
 
 	[string] $visualStudioDirectoryPath = Get-CommonVisualStudioDirectoryPath
-	[bool] $visualStudioDirectoryPathExists = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
-	if (!$visualStudioDirectoryPathExists) 
+	[bool] $visualStudioDirectoryPathDoesNotExist = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
+	if ($visualStudioDirectoryPathDoesNotExist)
 	{ 
 		return $null 
 	}
@@ -631,7 +654,7 @@ function Get-MsBuildPathForVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
 	}
 
 	# Build the expected path to the MsBuild executable.
-	$msBuildPath = (Join-Path -Path $msBuildDirectoryPath -ChildPath 'msbuild.exe')
+	$msBuildPath = (Join-Path -Path $msBuildDirectoryPath -ChildPath 'MsBuild.exe')
 
 	return $msBuildPath
 }
