@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.3.1'
+ModuleVersion = '2.4.0'
 
 # ID used to uniquely identify this module
 GUID = '8ca20938-b92a-42a1-bf65-f644e16a8d9e'
@@ -104,37 +104,8 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Fixed to actually add support for VS/MsBuild 2017.
-
-----------
-Invoke-MsBuild v2 has the following breaking changes from v1:
-  - A hash table with several properties is returned instead of a simple $true/$false/$null value.
-  - The GetLogPath switch is gone and replaced with the WhatIf switch.
-
-New features in v2 include:
-  - A build log file containing only build errors is created alongside the regular build log file.
-  - The errors build log file can be auto-launched on build failure.
-  - New switch has been added to show the build output in the calling scripts console window (does not work with some 3rd party consoles due to Start-Process cmdlet bug).
-  - A hash table containing the following properties is now returned:
-
-+ BuildSucceeded = $true if the build passed, $false if the build failed, and $null if we are not sure.
-+ BuildLogFilePath = The path to the builds log file.
-+ BuildErrorsLogFilePath = The path to the builds error log file.
-+ ItemToBuildFilePath = The item that MsBuild is ran against.
-+ CommandUsedToBuild = The full command that is used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
-+ Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
-+ MsBuildProcess = The process that was used to execute MsBuild.exe.
-
-Changes to make when updating from v1 to v2:
-- To capture/display the build success result, you must change:
-  Invoke-MsBuild ...
-to:
-  (Invoke-MsBuild ...).BuildSucceeded
-
-- To get the path where the log file will be created, you must change:
-  Invoke-MsBuild ... -GetLogPath
-to:
-  (Invoke-MsBuild ... -WhatIf).BuildLogFilePath'
+        ReleaseNotes = '- Added MsBuildFilePath and VisualStudioDeveloperCommandPromptFilePath script parameters, so users can pass in which versions they would like to use, instead of the script using the latest versions.
+- Fixed inverted bool logic that was causing the VS Command Prompt to never be used.'
 
     } # End of PSData hashtable
 
