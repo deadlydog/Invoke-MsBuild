@@ -71,8 +71,8 @@ function Invoke-MsBuild
 	execution while the build is performed, and also to inspect the process to see when it completes.
 	NOTE: This switch cannot be used with the AutoLaunchBuildLogOnFailure, AutoLaunchBuildErrorsLogOnFailure, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
 	
-    .PARAMETER LogVerbosity
-    If set, this will set the verbosity of the build log. Possible values are: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic].
+	.PARAMETER LogVerbosity
+	If set, this will set the verbosity of the build log. Possible values are: q[uiet], m[inimal], n[ormal], d[etailed], and diag[nostic].
 
 	.PARAMETER WhatIf
 	If set, the build will not actually be performed.
@@ -204,9 +204,9 @@ function Invoke-MsBuild
 		[Alias("LogDirectory","L")]
 		[string] $BuildLogDirectoryPath = $env:Temp,
 
-        [parameter(Mandatory=$false)]
+		[parameter(Mandatory=$false)]
 		[ValidateSet('q','quiet','m','minimal','n','normal','d','detailed','diag','diagnostic')]
-        [string] $LogVerbosityLevel = 'normal',
+		[string] $LogVerbosityLevel = 'normal',
 
 		[parameter(Mandatory=$false,ParameterSetName="Wait")]
 		[ValidateNotNullOrEmpty()]
@@ -249,12 +249,12 @@ function Invoke-MsBuild
 		# Ignore cultural differences. This is so that when reading version numbers it does not change the '.' to ',' when the OS's language/culture is not English.
 		[CultureInfo]::CurrentCulture = [CultureInfo]::InvariantCulture
 
-        # Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
-        if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
+		# Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
+		if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
 		if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildErrorsLogOnFailure = $false }
-        if (!(Test-Path Variable:Private:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
+		if (!(Test-Path Variable:Private:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
 		if (!(Test-Path Variable:Private:PromptForInputBeforeClosing)) { $PromptForInputBeforeClosing = $false }
-        if (!(Test-Path Variable:Private:PassThru)) { $PassThru = $false }
+		if (!(Test-Path Variable:Private:PassThru)) { $PassThru = $false }
 		
 		# If the keyword was supplied, place the log in the same folder as the solution/project being built.
 		if ($BuildLogDirectoryPath.Equals("PathDirectory", [System.StringComparison]::InvariantCultureIgnoreCase))
@@ -285,14 +285,14 @@ function Invoke-MsBuild
 		try
 		{			
 			# Get the verbosity to use for the MsBuild log file.
-            $verbosityLevel = switch ($LogVerbosityLevel) { 
-                { ($_ -eq "q")    -or ($_ -eq "quiet") -or `
-                  ($_ -eq "m")    -or ($_ -eq "minimal") -or `
-                  ($_ -eq "n")    -or ($_ -eq "normal") -or `
-                  ($_ -eq "d")    -or ($_ -eq "detailed") -or `
-                  ($_ -eq "diag") -or ($_ -eq "diagnostic") } { ";verbosity=$_" ;break }
-                default { "" }
-            }
+			$verbosityLevel = switch ($LogVerbosityLevel) { 
+				{ ($_ -eq "q")    -or ($_ -eq "quiet") -or `
+				  ($_ -eq "m")    -or ($_ -eq "minimal") -or `
+				  ($_ -eq "n")    -or ($_ -eq "normal") -or `
+				  ($_ -eq "d")    -or ($_ -eq "detailed") -or `
+				  ($_ -eq "diag") -or ($_ -eq "diagnostic") } { ";verbosity=$_" ;break }
+				default { "" }
+			}
 			
 			# Build the arguments to pass to MsBuild.
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath""$verbosityLevel /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
@@ -379,15 +379,15 @@ function Invoke-MsBuild
 			return $result
 		}
 
-        # If we can't find the build's log file in order to inspect it, write a warning and return null.
-        if (!(Test-Path -Path $buildLogFilePath))
-        {
+		# If we can't find the build's log file in order to inspect it, write a warning and return null.
+		if (!(Test-Path -Path $buildLogFilePath))
+		{
 			$result.BuildSucceeded = $null
 			$result.Message = "Cannot find the build log file at '$buildLogFilePath', so unable to determine if build succeeded or not."
 			
-            Write-Warning ($result.Message)
-            return $result
-        }
+			Write-Warning ($result.Message)
+			return $result
+		}
 
 		# Get if the build failed or not by looking at the log file.
 		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $result.MsBuildProcess.ExitCode -eq 0)
