@@ -85,7 +85,7 @@ function Invoke-MsBuild
 
 	.PARAMETER WhatIf
 	If set, the build will not actually be performed.
-	Instead it will just return the result object containing the file paths that would be created if the build is performed with the same parameters.
+	Instead it will just return the result hash table containing the file paths that would be created if the build is performed with the same parameters.
 	
 	.OUTPUTS
 	
@@ -177,14 +177,14 @@ function Invoke-MsBuild
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -WhatIf
 	
-	Returns the result object containing the same property values that would be created if the build was ran with the same parameters.
+	Returns the result hash table containing the same property values that would be created if the build was ran with the same parameters.
 	The BuildSucceeded property will be $null since no build will actually be invoked.
-	This will display all of the returned object's properties and their values.
+	This will display all of the returned hash table's properties and their values.
 	
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" > $null
 	
-	Builds the given C# project, discarding the result object and not displaying its properties.
+	Builds the given C# project, discarding the result hash table and not displaying its properties.
 	
 	.LINK
 	Project home: https://github.com/deadlydog/Invoke-MsBuild
@@ -288,7 +288,7 @@ function Invoke-MsBuild
 		$buildErrorsLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbulid.errors.log"
 		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
 
-		# Build our object that will be returned.
+		# Build our hash table that will be returned.
 		$result = @{}
 		$result.BuildSucceeded = $null
 		$result.BuildLogFilePath = $buildLogFilePath
