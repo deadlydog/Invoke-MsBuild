@@ -1,5 +1,7 @@
-# Project Description
+# Invoke-MsBuild PowerShell Module
+
 A PowerShell module to make building projects and solutions with MsBuild easy. It provides features such as:
+
 * Check if the build succeeded or failed
 * Automatically open the build log file when the build fails
 * View the build output in the current console window, a new window, or not at all
@@ -7,12 +9,13 @@ A PowerShell module to make building projects and solutions with MsBuild easy. I
 
 The module simply passes through any MsBuild command-line parameters you supply, so it supports all functionality (e.g. project types, targets, etc.) that you would get by calling MsBuild directly. The module builds using the Visual Studio Command Prompt when available in order to support more project types that MsBuild.exe alone may not support, such as XNA projects.
 
-# Getting Started
+## Getting Started
+
 You can either download the `Invoke-MsBuild.psm1` file from the [Releases page][ReleasesPageUrl] directly, or [install the module from the PowerShell Gallery][PowerShellGalleryPackageUrl].
 
 Here is an example of how to import the Invoke-MsBuild module into your powershell session and call it:
 
-```
+```PowerShell
 Import-Module -Name "C:\PathTo\Invoke-MsBuild.psm1"
 Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 ```
@@ -29,9 +32,9 @@ When the -PassThru switch is not provided, a hash table with the following prope
 * Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
 * MsBuildProcess = The process that was used to execute MsBuild.exe.
 
-# Examples
+## Examples
 
-```
+```PowerShell
 $buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
 if ($buildResult.BuildSucceeded -eq $true)
@@ -47,7 +50,7 @@ The PowerShell script will halt execution until MsBuild completes.
 
 ---
 
-```
+```PowerShell
 $process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 
 while (!$process.HasExited)
@@ -63,17 +66,18 @@ You can check the process's HasExited property to check if the build has complet
 
 ---
 
-```
+```PowerShell
 if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 {
     Write-Host "Build completed successfully."
 }
 ```
+
 Perfom the build against the file specified at $pathToSolution and checks it for success in a single line.
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildOutputInNewWindow
 ```
 
@@ -82,7 +86,7 @@ A window displaying the output from MsBuild will be shown so the user can view t
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\MySolution.sln" -Params "/target:Clean;Build /property:Configuration=Release;Platform=x64;BuildInParallel=true /verbosity:Detailed /maxcpucount"
 ```
 
@@ -91,7 +95,7 @@ Here the shorter "Params" alias is used instead of the full "MsBuildParameters" 
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInNewWindow -PromptForInputBeforeClosing -AutoLaunchBuildLogOnFailure
 ```
 
@@ -102,7 +106,7 @@ If the build fails, the build log will automatically be opened in the default te
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath "C:\BuildLogs" -KeepBuildLogOnSuccessfulBuilds -AutoLaunchBuildErrorsLogOnFailure
 ```
 
@@ -112,7 +116,7 @@ If the build fails, the build errors log will automatically be opened in the def
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -BuildLogDirectoryPath PathDirectory
 ```
 
@@ -121,7 +125,7 @@ The keyword 'PathDirectory' is used, so the build log will be saved in "C:\Some 
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Database\Database.dbproj" -P "/t:Deploy /p:TargetDatabase=MyDatabase /p:TargetConnectionString=`"Data Source=DatabaseServerName`;Integrated Security=True`;Pooling=False`" /p:DeployToDatabase=True"
 ```
 
@@ -131,7 +135,7 @@ The shorter alias' of the MsBuild parameters are also used; "/t" instead of "/ta
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -WhatIf
 ```
 
@@ -141,13 +145,13 @@ This will display all of the returned object's properties and their values.
 
 ---
 
-```
+```PowerShell
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" > $null
 ```
 
 Builds the given C# project, discarding the result object and not displaying its properties.
 
-# Full Documentation
+## Full Documentation
 
 Once the module has been imported, you can access the the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFileUrl].
 
