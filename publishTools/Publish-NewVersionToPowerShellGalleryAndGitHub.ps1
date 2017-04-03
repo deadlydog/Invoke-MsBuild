@@ -15,7 +15,6 @@ $isTestingThisScript = $false
 $THIS_SCRIPTS_DIRECTORY = Split-Path $script:MyInvocation.MyCommand.Path
 $helperScriptsDirectory = Join-Path -Path $THIS_SCRIPTS_DIRECTORY -ChildPath 'HelperScripts'
 $commonFunctionsScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildPath 'CommonFunctions.ps1'
-$newGitHubReleaseScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildPath 'New-GitHubRelease.ps1'
 $srcDirectoryPath = Join-Path -Path (Split-Path -Path $THIS_SCRIPTS_DIRECTORY -Parent) -ChildPath 'src'
 
 # Buid the paths to the files to modify and publish.
@@ -23,14 +22,16 @@ $moduleDirectoryPath = Join-Path $srcDirectoryPath 'Invoke-MsBuild'
 $moduleFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psm1'
 $manifestFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psd1'
 
+$gitHubUsername = 'deadlydog'
 $gitHubRepositoryName = 'Invoke-MsBuild'
 $powerShellGalleryNuGetPackageUrlWithTrailingSlash = 'https://www.powershellgallery.com/packages/Invoke-MsBuild/'
 
 # Dot-source in the other scripts containing functions this script will use.
 . $commonFunctionsScriptFilePath
-. $newGitHubReleaseScriptFilePath
 
 Clear-Host
+
+Install-Module -Name New-GitHubRelease -Scope CurrentUser
 
 # Regex patterns used to find the current version number and release notes.
 $scriptVersionNumberRegexPattern = '(?i)Version:\s*(?<Version>.*?)\s*$'
@@ -101,7 +102,14 @@ Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestRe
 Write-Output "Publishing new NuGet package to the PowerShell Gallery..."
 if (!$isTestingThisScript)
 {
-	Publish-Module -Path $moduleDirectoryPath -NuGetApiKey $PowerShellGalleryNuGetApiKey
+	try 
+	{
+		Publish-Module -Path $moduleDirectoryPath -NuGetApiKey $PowerShellGalleryNuGetApiKey
+	}
+	catch 
+	{
+		throw $_.Exception.Message
+	}
 
 	$powerShellGalleryNuGetPackageExpectedUrl = "$powerShellGalleryNuGetPackageUrlWithTrailingSlash$newVersionNumber"
 	Write-Output "PowerShell Gallery NuGet Package has been published. View it at:  $powerShellGalleryNuGetPackageExpectedUrl"
@@ -111,15 +119,28 @@ if (!$isTestingThisScript)
 $versionNumberIsAPreReleaseVersion = $newVersionNumber -match '-+|[a-zA-Z]+' # (e.g. 1.2.3-alpha). i.e. contains a dash or letters.
 $gitHubReleaseParameters = 
 @{
-	GitHubUsername = 'deadlydog'
+	GitHubUsername = $gitHubUsername
 	GitHubRepositoryName = $gitHubRepositoryName
 	GitHubAccessToken = $GitHubAccessToken
 	ReleaseName = "$gitHubRepositoryName v" + $newVersionNumber
 	TagName = "v" + $newVersionNumber
 	ReleaseNotes = $newReleaseNotes
-	ArtifactFilePaths = [string[]]@($moduleFilePath, $manifestFilePath)
+	AssetFilePaths = @($moduleFilePath, $manifestFilePath)
 	IsPreRelease = $versionNumberIsAPreReleaseVersion
 	IsDraft = $isTestingThisScript
 }
 Write-Output "Creating new GitHub release..."
-New-GitHubRelease @gitHubReleaseParameters -InformationAction Continue
+$gitHubReleaseCreationResult = New-GitHubRelease @gitHubReleaseParameters
+
+if ($gitHubReleaseCreationResult.Succeeded -eq $true)
+{ 
+	Write-Output "Release published successfully! View it at $($gitHubReleaseCreationResult.ReleaseUrl)"
+}
+elseif ($gitHubReleaseCreationResult.ReleaseCreationSucceeded -eq $false)
+{ 
+	throw "The release was not created. Error message is: $($gitHubReleaseCreationResult.ErrorMessage)"
+}
+elseif ($gitHubReleaseCreationResult.AllAssetUploadsSucceeded -eq $false)
+{ 
+	throw "The release was created, but not all of the assets were uploaded to it. View it at $($gitHubReleaseCreationResult.ReleaseUrl). Error message is: $($gitHubReleaseCreationResult.ErrorMessage)"
+}
