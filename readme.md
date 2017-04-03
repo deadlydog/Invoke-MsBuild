@@ -8,7 +8,7 @@ A PowerShell module to make building projects and solutions with MsBuild easy. I
 The module simply passes through any MsBuild command-line parameters you supply, so it supports all functionality (e.g. project types, targets, etc.) that you would get by calling MsBuild directly. The module builds using the Visual Studio Command Prompt when available in order to support more project types that MsBuild.exe alone may not support, such as XNA projects.
 
 # Getting Started
-You can either download the `Invoke-MsBuild.psm1` file from the [Releases page](https://github.com/deadlydog/Invoke-MsBuild/releases) directly, or [install the module from the PowerShell Gallery](https://www.powershellgallery.com/packages/Invoke-MsBuild/).
+You can either download the `Invoke-MsBuild.psm1` file from the [Releases page][ReleasesPageUrl] directly, or [install the module from the PowerShell Gallery][PowerShellGalleryPackageUrl].
 
 Here is an example of how to import the Invoke-MsBuild module into your powershell session and call it:
 
@@ -149,6 +149,8 @@ Builds the given C# project, discarding the result object and not displaying its
 
 # Full Documentation
 
-Once the module has been imported, you can access the the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFile].
+Once the module has been imported, you can access the the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFileUrl].
 
-[DocumentationInSourceControlFile]:https://github.com/deadlydog/Invoke-MsBuild/blob/master/src/Invoke-MsBuild/Invoke-MsBuild.psm1#L6
+[ReleasesPageUrl]:https://github.com/deadlydog/Invoke-MsBuild/releases
+[PowerShellGalleryPackageUrl]:https://www.powershellgallery.com/packages/Invoke-MsBuild/
+[DocumentationInSourceControlFileUrl]:https://github.com/deadlydog/Invoke-MsBuild/blob/master/src/Invoke-MsBuild/Invoke-MsBuild.psm1#L6
