@@ -149,6 +149,6 @@ Builds the given C# project, discarding the result object and not displaying its
 
 # Full Documentation
 
-Once the module has been imported, you can access the the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][LinkToDocumentationInSourceControlFile].
+Once the module has been imported, you can access the the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFile].
 
-[LinkToDocumentationInSourceControlFile]:https://github.com/deadlydog/Invoke-MsBuild/blob/master/Invoke-MsBuild/Invoke-MsBuild.psm1#L6
+[DocumentationInSourceControlFile]:https://github.com/deadlydog/Invoke-MsBuild/blob/master/src/Invoke-MsBuild/Invoke-MsBuild.psm1#L6
