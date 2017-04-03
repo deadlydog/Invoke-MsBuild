@@ -38,11 +38,17 @@ When the -PassThru switch is not provided, a hash table with the following prope
 $buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
 if ($buildResult.BuildSucceeded -eq $true)
-{ Write-Host "Build completed successfully." }
+{
+    Write-Output "Build completed successfully."
+}
 elseif ($buildResult.BuildSucceeded -eq $false)
-{ Write-Host "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors." }
+{
+    Write-Output "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors."
+}
 elseif ($buildResult.BuildSucceeded -eq $null)
-{ Write-Host "Unsure if build passed or failed: $($buildResult.Message)" }
+{
+    Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
+}
 ```
 
 Perform the default MsBuild actions on the Visual Studio solution to build the projects in it, and returns a hash table containing the results.
@@ -69,7 +75,7 @@ You can check the process's HasExited property to check if the build has complet
 ```PowerShell
 if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 {
-    Write-Host "Build completed successfully."
+    Write-Output "Build completed successfully."
 }
 ```
 
