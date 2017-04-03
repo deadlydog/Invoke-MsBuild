@@ -104,9 +104,9 @@ function Invoke-MsBuild
 	
 	if ($buildResult.BuildSucceeded -eq $true)
 	{ Write-Host "Build completed successfully." }
-	else if ($buildResult.BuildSucceeded -eq $false)
+	elseif ($buildResult.BuildSucceeded -eq $false)
 	{ Write-Host "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors." }
-	else if ($buildResult.BuildSucceeded -eq $null)
+	elseif ($buildResult.BuildSucceeded -eq $null)
 	{ Write-Host "Unsure if build passed or failed: $($buildResult.Message)" }
 	
 	Perform the default MsBuild actions on the Visual Studio solution to build the projects in it, and returns a hash table containing the results.
