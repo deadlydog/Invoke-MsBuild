@@ -20,7 +20,7 @@ $srcDirectoryPath = Join-Path -Path (Split-Path -Path $THIS_SCRIPTS_DIRECTORY -P
 
 # Buid the paths to the files to modify and publish.
 $moduleDirectoryPath = Join-Path $srcDirectoryPath 'Invoke-MsBuild'
-$scriptFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psm1'
+$moduleFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psm1'
 $manifestFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psd1'
 
 $gitHubRepositoryName = 'Invoke-MsBuild'
@@ -38,7 +38,7 @@ $manifestVersionNumberRegexPattern = "(?i)ModuleVersion = '(?<Version>.*?)'"
 $manifestReleaseNotesRegexPattern = "(?is)ReleaseNotes = '(?<ReleaseNotes>.*?)'"
 
 # Get the script's current version number.
-$currentScriptVersionNumberMatches = Select-String -Path $scriptFilePath -Pattern $scriptVersionNumberRegexPattern | Select-Object -First 1
+$currentScriptVersionNumberMatches = Select-String -Path $moduleFilePath -Pattern $scriptVersionNumberRegexPattern | Select-Object -First 1
 if ($currentScriptVersionNumberMatches.Matches.Count -le 0 -or !$currentScriptVersionNumberMatches.Matches[0].Success)
 { throw "Could not find the script's current version number." }
 $currentScriptVersionNumberMatch = $currentScriptVersionNumberMatches.Matches[0]
@@ -93,7 +93,7 @@ $newManifestVersionNumberLine = $currentManifestVersionNumberLine.Replace("'$cur
 $newManifestReleaseNotesLine = $currentManifestReleaseNotesLine.Replace("'$currentManifestReleaseNotes'", "'$newReleaseNotes'")
 
 # Update the version number and release notes in the module script and manifest.
-Replace-TextInFile -filePath $scriptFilePath -textToReplace $currentScriptVersionNumberLine -replacementText $newScriptVersionNumberLine
+Replace-TextInFile -filePath $moduleFilePath -textToReplace $currentScriptVersionNumberLine -replacementText $newScriptVersionNumberLine
 Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestVersionNumberLine -replacementText $newManifestVersionNumberLine
 Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestReleaseNotesLine -replacementText $newManifestReleaseNotesLine
 
@@ -117,7 +117,7 @@ $gitHubReleaseParameters =
 	ReleaseName = "$gitHubRepositoryName v" + $newVersionNumber
 	TagName = "v" + $newVersionNumber
 	ReleaseNotes = $newReleaseNotes
-	ArtifactFilePaths = [string[]]@($scriptFilePath, $manifestFilePath)
+	ArtifactFilePaths = [string[]]@($moduleFilePath, $manifestFilePath)
 	IsPreRelease = $versionNumberIsAPreReleaseVersion
 	IsDraft = $isTestingThisScript
 }
