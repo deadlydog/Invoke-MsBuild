@@ -88,7 +88,6 @@ function Invoke-MsBuild
 	Instead it will just return the result hash table containing the file paths that would be created if the build is performed with the same parameters.
 	
 	.OUTPUTS
-	
 	When the -PassThru switch is provided, the process being used to run MsBuild.exe is returned.
 	When the -PassThru switch is not provided, a hash table with the following properties is returned:
 	
