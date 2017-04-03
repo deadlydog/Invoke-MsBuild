@@ -18,14 +18,17 @@ $commonFunctionsScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildP
 $newGitHubReleaseScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildPath 'New-GitHubRelease.ps1'
 $srcDirectoryPath = Join-Path -Path (Split-Path -Path $THIS_SCRIPTS_DIRECTORY -Parent) -ChildPath 'src'
 
-# Dot-source in the other scripts containing functions this script will use.
-. $commonFunctionsScriptFilePath
-. $newGitHubReleaseScriptFilePath
-
 # Buid the paths to the files to modify and publish.
 $moduleDirectoryPath = Join-Path $srcDirectoryPath 'Invoke-MsBuild'
 $scriptFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psm1'
 $manifestFilePath = Join-Path $moduleDirectoryPath 'Invoke-MsBuild.psd1'
+
+$gitHubRepositoryName = 'Invoke-MsBuild'
+$powerShellGalleryNuGetPackageUrlWithTrailingSlash = 'https://www.powershellgallery.com/packages/Invoke-MsBuild/'
+
+# Dot-source in the other scripts containing functions this script will use.
+. $commonFunctionsScriptFilePath
+. $newGitHubReleaseScriptFilePath
 
 Clear-Host
 
@@ -100,7 +103,7 @@ if (!$isTestingThisScript)
 {
 	Publish-Module -Path $moduleDirectoryPath -NuGetApiKey $PowerShellGalleryNuGetApiKey
 
-	$powerShellGalleryNuGetPackageExpectedUrl = "https://www.powershellgallery.com/packages/Invoke-MsBuild/$newVersionNumber"
+	$powerShellGalleryNuGetPackageExpectedUrl = "$powerShellGalleryNuGetPackageUrlWithTrailingSlash$newVersionNumber"
 	Write-Output "PowerShell Gallery NuGet Package has been published. View it at:  $powerShellGalleryNuGetPackageExpectedUrl"
 }
 
@@ -109,9 +112,9 @@ $versionNumberIsAPreReleaseVersion = $newVersionNumber -match '-+|[a-zA-Z]+' # (
 $gitHubReleaseParameters = 
 @{
 	GitHubUsername = 'deadlydog'
-	GitHubRepositoryName = 'Invoke-MsBuild'
+	GitHubRepositoryName = $gitHubRepositoryName
 	GitHubAccessToken = $GitHubAccessToken
-	ReleaseName = "Invoke-MsBuild v" + $newVersionNumber
+	ReleaseName = "$gitHubRepositoryName v" + $newVersionNumber
 	TagName = "v" + $newVersionNumber
 	ReleaseNotes = $newReleaseNotes
 	ArtifactFilePaths = [string[]]@($scriptFilePath, $manifestFilePath)
