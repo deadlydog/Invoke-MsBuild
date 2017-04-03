@@ -105,7 +105,7 @@ function Invoke-MsBuild
 	
 	if ($buildResult.BuildSucceeded -eq $true)
 	{ Write-Host "Build completed successfully." }
-	else if (!$buildResult.BuildSucceeded -eq $false)
+	else if ($buildResult.BuildSucceeded -eq $false)
 	{ Write-Host "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors." }
 	else if ($buildResult.BuildSucceeded -eq $null)
 	{ Write-Host "Unsure if build passed or failed: $($buildResult.Message)" }
