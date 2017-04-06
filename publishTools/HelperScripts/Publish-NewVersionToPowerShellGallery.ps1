@@ -6,10 +6,10 @@ function Publish-ToPowerShellGallery([string] $moduleDirectoryPath, [string] $po
     $isPowerShellGalleryNuGetApiKeyProvidedFromPrompt = $false
     if ([string]::IsNullOrWhiteSpace($powerShellGalleryNuGetApiKey))
     {
-		$encodedPowerShellGalleryNuGetApiKey = [Environment]::GetEnvironmentVariable($powerShellGalleryNuGetApiKeyEnvironmentalVariableName, "User")
+        $encodedPowerShellGalleryNuGetApiKey = [Environment]::GetEnvironmentVariable($powerShellGalleryNuGetApiKeyEnvironmentalVariableName, "User")
         if (![string]::IsNullOrWhiteSpace($encodedPowerShellGalleryNuGetApiKey))
         {
-			$powerShellGalleryNuGetApiKeyAsBytes = [System.Convert]::FromBase64String($encodedPowerShellGalleryNuGetApiKey)
+            $powerShellGalleryNuGetApiKeyAsBytes = [System.Convert]::FromBase64String($encodedPowerShellGalleryNuGetApiKey)
             $powerShellGalleryNuGetApiKey = [System.Text.Encoding]::UTF8.GetString($powerShellGalleryNuGetApiKeyAsBytes)
         }
 
@@ -25,37 +25,35 @@ function Publish-ToPowerShellGallery([string] $moduleDirectoryPath, [string] $po
         throw 'No PowerShell Gallery API key was provided, so exiting without attempting to publish a new NuGet package.'
     }
 
-    # Publish the new version of the module to the PowerShell Gallery.
-    
     if ($isTestingThisScript)
     {
         Write-Output "Script is in TESTING mode, so we will not actually try to publish the new NuGet package to the PowerShell Gallery."
+        return
     }
-    else
+
+    # Publish the new version of the module to the PowerShell Gallery.
+    Write-Output "Publishing new NuGet package to the PowerShell Gallery..."
+    try
     {
-        try 
-        {
-            Write-Output "Publishing new NuGet package to the PowerShell Gallery..."
-			Publish-Module -Path $moduleDirectoryPath -NuGetApiKey $powerShellGalleryNuGetApiKey
-        }
-        catch 
-        {
-            throw $_.Exception.Message
-        }
+        Publish-Module -Path $moduleDirectoryPath -NuGetApiKey $powerShellGalleryNuGetApiKey
+    }
+    catch
+    {
+        throw $_.Exception.Message
+    }
 
-        $powerShellGalleryNuGetPackageExpectedUrl = "$powerShellGalleryNuGetPackageUrlWithTrailingSlash$newVersionNumber"
-        Write-Output "PowerShell Gallery NuGet Package has been published. View it at:  $powerShellGalleryNuGetPackageExpectedUrl"
+    $powerShellGalleryNuGetPackageExpectedUrl = "$powerShellGalleryNuGetPackageUrlWithTrailingSlash$newVersionNumber"
+    Write-Output "PowerShell Gallery NuGet Package has been published. View it at:  $powerShellGalleryNuGetPackageExpectedUrl"
 
-        # If we prompted the user for the API key, ask them if they want to save it for next time.
-        if ($isPowerShellGalleryNuGetApiKeyProvidedFromPrompt)
+    # If we prompted the user for the API key, ask them if they want to save it for next time.
+    if ($isPowerShellGalleryNuGetApiKeyProvidedFromPrompt)
+    {
+        $savePowerShellGalleryApiKeyAnswer = Read-MessageBoxDialog -WindowTitle "Save PowerShell Gallery API Key?" -Message 'Would you like to save the API key in an environmental variable so you are not prompted for it next time?'-Buttons YesNo
+        if ($savePowerShellGalleryApiKeyAnswer -eq 'Yes')
         {
-            $savePowerShellGalleryApiKeyAnswer = Read-MessageBoxDialog -WindowTitle "Save PowerShell Gallery API Key?" -Message 'Would you like to save the API key in an environmental variable so you are not prompted for it next time?'-Buttons YesNo
-            if ($savePowerShellGalleryApiKeyAnswer -eq 'Yes')
-            {
-				$powerShellGalleryNuGetApiKeyAsBytes = [System.Text.Encoding]::UTF8.GetBytes($powerShellGalleryNuGetApiKey)
-            	$encodedPowerShellGalleryNuGetApiKey = [System.Convert]::ToBase64String($powerShellGalleryNuGetApiKeyAsBytes)
-                [Environment]::SetEnvironmentVariable($powerShellGalleryNuGetApiKeyEnvironmentalVariableName, $encodedPowerShellGalleryNuGetApiKey, "User")
-            }
+            $powerShellGalleryNuGetApiKeyAsBytes = [System.Text.Encoding]::UTF8.GetBytes($powerShellGalleryNuGetApiKey)
+            $encodedPowerShellGalleryNuGetApiKey = [System.Convert]::ToBase64String($powerShellGalleryNuGetApiKeyAsBytes)
+            [Environment]::SetEnvironmentVariable($powerShellGalleryNuGetApiKeyEnvironmentalVariableName, $encodedPowerShellGalleryNuGetApiKey, "User")
         }
     }
 }
