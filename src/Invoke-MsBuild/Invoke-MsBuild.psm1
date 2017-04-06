@@ -143,7 +143,12 @@ function Invoke-MsBuild
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildOutputInNewWindow
 
 	Cleans then Builds the given C# project.
-	A window displaying the output from MsBuild will be shown so the user can view the progress of the build.
+	A window displaying the output from MsBuild will be shown so the user can view the progress of the build without it polluting their current terminal window.
+
+	.EXAMPLE
+	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInCurrentWindow
+
+	Builds the given C# project and displays the output from MsBuild in the current terminal window.
 
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\MySolution.sln" -Params "/target:Clean;Build /property:Configuration=Release;Platform=x64;BuildInParallel=true /verbosity:Detailed /maxcpucount"

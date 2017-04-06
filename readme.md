@@ -93,6 +93,15 @@ A window displaying the output from MsBuild will be shown so the user can view t
 ---
 
 ```PowerShell
+.EXAMPLE
+Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInCurrentWindow
+```
+
+Builds the given C# project, displaying the output from MsBuild in the current window.
+
+---
+
+```PowerShell
 Invoke-MsBuild -Path "C:\MySolution.sln" -Params "/target:Clean;Build /property:Configuration=Release;Platform=x64;BuildInParallel=true /verbosity:Detailed /maxcpucount"
 ```
 
@@ -159,7 +168,7 @@ Builds the given C# project, discarding the result object and not displaying its
 
 ## Full Documentation
 
-Once the module has been imported, you can access the the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFileUrl].
+For a full list of available parameters, check out the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFileUrl].
 
 [ReleasesPageUrl]:https://github.com/deadlydog/Invoke-MsBuild/releases
 [PowerShellGalleryPackageUrl]:https://www.powershellgallery.com/packages/Invoke-MsBuild/
