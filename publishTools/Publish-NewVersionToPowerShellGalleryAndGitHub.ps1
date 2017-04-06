@@ -1,20 +1,22 @@
 ﻿param
 (
-	[Parameter(Mandatory=$true)]
+	[Parameter(Mandatory=$false)]
 	[ValidateNotNullOrEmpty()]
 	[string] $PowerShellGalleryNuGetApiKey,
 
-	[Parameter(Mandatory=$true)]
+	[Parameter(Mandatory=$false)]
 	[ValidateNotNullOrEmpty()]
 	[string] $GitHubAccessToken
 )
 
 # Set to True when testing the script to prevent actual publishing to PowerShell Gallery, and to create a Draft of the GitHub Release instead of a published Release.
-$isTestingThisScript = $false
+$isTestingThisScript = $true
 
 $THIS_SCRIPTS_DIRECTORY = Split-Path $script:MyInvocation.MyCommand.Path
 $helperScriptsDirectory = Join-Path -Path $THIS_SCRIPTS_DIRECTORY -ChildPath 'HelperScripts'
 $commonFunctionsScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildPath 'CommonFunctions.ps1'
+$publishToPowerShellGalleryScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildPath 'Publish-NewVersionToPowerShellGallery.ps1'
+$publishToGitHubScriptFilePath = Join-Path -Path $helperScriptsDirectory -ChildPath 'Publish-NewReleaseToGitHub.ps1'
 $srcDirectoryPath = Join-Path -Path (Split-Path -Path $THIS_SCRIPTS_DIRECTORY -Parent) -ChildPath 'src'
 
 # Buid the paths to the files to modify and publish.
@@ -28,10 +30,10 @@ $powerShellGalleryNuGetPackageUrlWithTrailingSlash = 'https://www.powershellgall
 
 # Dot-source in the other scripts containing functions this script will use.
 . $commonFunctionsScriptFilePath
+. $publishToPowerShellGalleryScriptFilePath
+. $publishToGitHubScriptFilePath
 
 Clear-Host
-
-Install-Module -Name New-GitHubRelease -Scope CurrentUser
 
 # Regex patterns used to find the current version number and release notes.
 $scriptVersionNumberRegexPattern = '(?i)Version:\s*(?<Version>.*?)\s*$'
@@ -98,24 +100,8 @@ Replace-TextInFile -filePath $moduleFilePath -textToReplace $currentScriptVersio
 Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestVersionNumberLine -replacementText $newManifestVersionNumberLine
 Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestReleaseNotesLine -replacementText $newManifestReleaseNotesLine
 
-# Publish the new version of the module to the PowerShell Gallery.
-Write-Output "Publishing new NuGet package to the PowerShell Gallery..."
-if (!$isTestingThisScript)
-{
-	try 
-	{
-		Publish-Module -Path $moduleDirectoryPath -NuGetApiKey $PowerShellGalleryNuGetApiKey
-	}
-	catch 
-	{
-		throw $_.Exception.Message
-	}
+Publish-ToPowerShellGallery -moduleDirectoryPath $moduleDirectoryPath -powerShellGalleryNuGetApiKey $PowerShellGalleryNuGetApiKey -isTestingThisScript $isTestingThisScript
 
-	$powerShellGalleryNuGetPackageExpectedUrl = "$powerShellGalleryNuGetPackageUrlWithTrailingSlash$newVersionNumber"
-	Write-Output "PowerShell Gallery NuGet Package has been published. View it at:  $powerShellGalleryNuGetPackageExpectedUrl"
-}
-
-# Publish the new version of the module to GitHub.
 $versionNumberIsAPreReleaseVersion = $newVersionNumber -match '-+|[a-zA-Z]+' # (e.g. 1.2.3-alpha). i.e. contains a dash or letters.
 $gitHubReleaseParameters = 
 @{
@@ -129,18 +115,4 @@ $gitHubReleaseParameters =
 	IsPreRelease = $versionNumberIsAPreReleaseVersion
 	IsDraft = $isTestingThisScript
 }
-Write-Output "Creating new GitHub release..."
-$gitHubReleaseCreationResult = New-GitHubRelease @gitHubReleaseParameters
-
-if ($gitHubReleaseCreationResult.Succeeded -eq $true)
-{ 
-	Write-Output "Release published successfully! View it at $($gitHubReleaseCreationResult.ReleaseUrl)"
-}
-elseif ($gitHubReleaseCreationResult.ReleaseCreationSucceeded -eq $false)
-{ 
-	throw "The release was not created. Error message is: $($gitHubReleaseCreationResult.ErrorMessage)"
-}
-elseif ($gitHubReleaseCreationResult.AllAssetUploadsSucceeded -eq $false)
-{ 
-	throw "The release was created, but not all of the assets were uploaded to it. View it at $($gitHubReleaseCreationResult.ReleaseUrl). Error message is: $($gitHubReleaseCreationResult.ErrorMessage)"
-}
+Publish-NewReleaseToGitHub -gitHubReleaseParameters $gitHubReleaseParameters
