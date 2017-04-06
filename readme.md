@@ -39,15 +39,15 @@ $buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
 if ($buildResult.BuildSucceeded -eq $true)
 {
-    Write-Output "Build completed successfully."
+	Write-Output "Build completed successfully."
 }
 elseif ($buildResult.BuildSucceeded -eq $false)
 {
-    Write-Output "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors."
+	Write-Output "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors."
 }
 elseif ($buildResult.BuildSucceeded -eq $null)
 {
-    Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
+	Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
 }
 ```
 
@@ -61,8 +61,8 @@ $process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 
 while (!$process.HasExited)
 {
-    Write-Host "Solution is still buildling..."
-    Start-Sleep -Seconds 1
+	Write-Host "Solution is still buildling..."
+	Start-Sleep -Seconds 1
 }
 ```
 
@@ -75,7 +75,7 @@ You can check the process's HasExited property to check if the build has complet
 ```PowerShell
 if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 {
-    Write-Output "Build completed successfully."
+	Write-Output "Build completed successfully."
 }
 ```
 
@@ -88,7 +88,7 @@ Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/targ
 ```
 
 Cleans then Builds the given C# project.
-A window displaying the output from MsBuild will be shown so the user can view the progress of the build.
+A window displaying the output from MsBuild will be shown so the user can view the progress of the build without it polluting their current terminal window.
 
 ---
 
@@ -97,7 +97,7 @@ A window displaying the output from MsBuild will be shown so the user can view t
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInCurrentWindow
 ```
 
-Builds the given C# project, displaying the output from MsBuild in the current window.
+Builds the given C# project and displays the output from MsBuild in the current terminal window.
 
 ---
 
