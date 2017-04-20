@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.4.0'
+ModuleVersion = '2.4.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,8 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Added MsBuildFilePath and VisualStudioDeveloperCommandPromptFilePath script parameters, so users can pass in which versions they would like to use, instead of the script using the latest versions.
-- Fixed inverted bool logic that was causing the VS Command Prompt to never be used.'
+        ReleaseNotes = '- Fixed "CurrentCulture is a ReadOnly property" bug on computers running .Net 4.5.2 and lower.'
 
     } # End of PSData hashtable
 

@@ -202,7 +202,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.4.0
+	Version: 2.4.1
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -274,7 +274,7 @@ function Invoke-MsBuild
 		Set-StrictMode -Version Latest
 
 		# Ignore cultural differences. This is so that when reading version numbers it does not change the '.' to ',' when the OS's language/culture is not English.
-		[CultureInfo]::CurrentCulture = [CultureInfo]::InvariantCulture
+		[System.Threading.Thread]::CurrentThread.CurrentCulture = [CultureInfo]::InvariantCulture
 
 		# Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
 		if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
