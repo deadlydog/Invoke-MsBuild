@@ -102,7 +102,7 @@ Replace-TextInFile -filePath $manifestFilePath -textToReplace $currentManifestRe
 
 Publish-ToPowerShellGallery -moduleDirectoryPath $moduleDirectoryPath -powerShellGalleryNuGetApiKey $PowerShellGalleryNuGetApiKey -isTestingThisScript $isTestingThisScript
 
-Read-MessageBoxDialog -WindowTitle "Commit and push changes to GitHub" -Message "Please commit the changes made by this script and push them to GitHub. This will ensure that the GitHub Release about to be created places the Tag on the correct (latest) commit. Click the OK button once that is done." -Buttons OK
+Read-MessageBoxDialog -WindowTitle "Commit and push changes to GitHub" -Message "Please commit the changes made by this script and push them to GitHub. This will ensure that the GitHub Release about to be created places the Tag on the correct (latest) commit. Click the OK button once that is done." -Buttons OK > $null
 
 $versionNumberIsAPreReleaseVersion = $newVersionNumber -match '-+|[a-zA-Z]+' # (e.g. 1.2.3-alpha). i.e. contains a dash or letters.
 $gitHubReleaseParameters = 
