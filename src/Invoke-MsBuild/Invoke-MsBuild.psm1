@@ -202,7 +202,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.4.1
+	Version: 2.4.2
 #>
 	[CmdletBinding(DefaultParameterSetName="Wait")]
 	param
@@ -675,6 +675,16 @@ function Get-CommonVisualStudioDirectoryPath
 	if ([string]::IsNullOrEmpty($programFilesDirectory))
 	{
 		$programFilesDirectory = 'C:\Program Files (x86)'
+	}
+
+	# If we're on a 32-bit machine, we need to go straight after the "Program Files" directory.
+	if (!(Test-Path -Path $programFilesDirectory -PathType Container))
+	{
+		$programFilesDirectory = Get-Item 'Env:\ProgramFiles' | Select-Object -ExpandProperty Value
+		if ([string]::IsNullOrEmpty($programFilesDirectory))
+		{
+			$programFilesDirectory = 'C:\Program Files'
+		}
 	}
 
 	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'

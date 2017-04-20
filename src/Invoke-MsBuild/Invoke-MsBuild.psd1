@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.4.1'
+ModuleVersion = '2.4.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Fixed "CurrentCulture is a ReadOnly property" bug on computers running .Net 4.5.2 and lower.'
+        ReleaseNotes = '- Fixed bug where MsBuild.exe would not be found on 32-bit Windows OSs.'
 
     } # End of PSData hashtable
 
