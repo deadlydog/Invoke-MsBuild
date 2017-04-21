@@ -98,17 +98,18 @@ function Invoke-MsBuild
 	CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
 	Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
 	MsBuildProcess = The process that was used to execute MsBuild.exe.
+	BuildDuration = The amount of time the build took to complete, represented as a TimeSpan.
 
 	.EXAMPLE
 	$buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
 	if ($buildResult.BuildSucceeded -eq $true)
 	{
-		Write-Output "Build completed successfully."
+		Write-Output ("Build completed successfully in {0:N1} seconds." -f $buildResult.BuildDuration.TotalSeconds)
 	}
 	elseif ($buildResult.BuildSucceeded -eq $false)
 	{
-		Write-Output "Build failed. Check the build log file $($buildResult.BuildLogFilePath) for errors."
+		Write-Output ("Build failed after {0:N1} seconds. Check the build log file '$($buildResult.BuildLogFilePath)' for errors." -f $buildResult.BuildDuration.TotalSeconds)
 	}
 	elseif ($buildResult.BuildSucceeded -eq $null)
 	{
@@ -399,7 +400,7 @@ function Invoke-MsBuild
 			}
 			else
 			{
-				$performBuildScriptBlock = 
+				$performBuildScriptBlock =
 				{
 					if ($ShowBuildOutputInCurrentWindow)
 					{
@@ -412,7 +413,7 @@ function Invoke-MsBuild
 				}
 
 				# Perform the build and record how long it takes.
-				$result.BuildDuration = (Measure-Command -Expression $performBuildScriptBlock).TotalMilliseconds
+				$result.BuildDuration = (Measure-Command -Expression $performBuildScriptBlock)
 			}
 		}
 		# If the build crashed, return that the build didn't succeed.

@@ -19,7 +19,8 @@ $invalidPath = (Join-Path $THIS_SCRIPTS_DIRECTORY "invalid\path")
 $testNumber = 0
 
 Write-Host ("{0}. Build solution..." -f ++$testNumber)
-if ((Invoke-MsBuild -Path $pathToGoodSolution).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+$buildResult = (Invoke-MsBuild -Path $pathToGoodSolution)
+if ($buildResult.BuildSucceeded -eq $true) { Write-Host ("Passed in {0:N1} seconds" -f $buildResult.BuildDuration.TotalSeconds) } else { throw "Test $testNumber failed." }
 
 Write-Host ("{0}. Build solution using 32-bit MsBuild..." -f ++$testNumber)
 if ((Invoke-MsBuild -Path $pathToGoodSolution -Use32BitMsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
