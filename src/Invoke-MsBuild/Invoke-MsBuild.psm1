@@ -307,6 +307,7 @@ function Invoke-MsBuild
 		$result.CommandUsedToBuild = [string]::Empty
 		$result.Message = [string]::Empty
 		$result.MsBuildProcess = $null
+		$result.BuildDuration = [TimeSpan]::Zero
 
 		# Try and build the solution.
 		try
@@ -398,14 +399,20 @@ function Invoke-MsBuild
 			}
 			else
 			{
-				if ($ShowBuildOutputInCurrentWindow)
+				$performBuildScriptBlock = 
 				{
-					$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
+					if ($ShowBuildOutputInCurrentWindow)
+					{
+						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
+					}
+					else
+					{
+						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
+					}
 				}
-				else
-				{
-					$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
-				}
+
+				# Perform the build and record how long it takes.
+				$result.BuildDuration = (Measure-Command -Expression $performBuildScriptBlock).TotalMilliseconds
 			}
 		}
 		# If the build crashed, return that the build didn't succeed.

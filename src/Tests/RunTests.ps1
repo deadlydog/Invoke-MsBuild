@@ -39,6 +39,9 @@ if ((Invoke-MsBuild -Path $pathToBrokenSolution).BuildSucceeded -eq $false) { Wr
 Write-Host ("{0}. Using -WhatIf switch... Should see object's properties and values." -f ++$testNumber)
 Invoke-MsBuild -Path $pathToGoodSolution -WhatIf
 
+Write-Host ("{0}. Build solution... Should see object's properties and values." -f ++$testNumber)
+Invoke-MsBuild -Path $pathToGoodSolution
+
 Write-Host ("{0}. Using -PassThru switch... Should see a few building messages." -f ++$testNumber)
 $process = Invoke-MsBuild -Path $pathToGoodSolution -PassThru	
 while (!$process.HasExited)
