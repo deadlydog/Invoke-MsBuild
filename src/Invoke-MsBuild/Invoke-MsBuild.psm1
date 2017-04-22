@@ -679,7 +679,14 @@ function Get-MsBuildPathForVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
 
 function Get-CommonVisualStudioDirectoryPath
 {
-	[string] $programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)' | Select-Object -ExpandProperty Value
+	[string] $programFilesDirectory = $null
+	try
+	{
+		$programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
+	}
+	catch
+	{ }
+
 	if ([string]::IsNullOrEmpty($programFilesDirectory))
 	{
 		$programFilesDirectory = 'C:\Program Files (x86)'
@@ -688,7 +695,15 @@ function Get-CommonVisualStudioDirectoryPath
 	# If we're on a 32-bit machine, we need to go straight after the "Program Files" directory.
 	if (!(Test-Path -Path $programFilesDirectory -PathType Container))
 	{
-		$programFilesDirectory = Get-Item 'Env:\ProgramFiles' | Select-Object -ExpandProperty Value
+		try
+		{
+			$programFilesDirectory = Get-Item 'Env:\ProgramFiles' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
+		}
+		catch
+		{
+			$programFilesDirectory = $null
+		}
+
 		if ([string]::IsNullOrEmpty($programFilesDirectory))
 		{
 			$programFilesDirectory = 'C:\Program Files'
