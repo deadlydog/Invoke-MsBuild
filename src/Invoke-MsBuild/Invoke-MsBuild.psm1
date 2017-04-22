@@ -682,7 +682,7 @@ function Get-CommonVisualStudioDirectoryPath
 	[string] $programFilesDirectory = $null
 	try 
 	{
-		$programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)aaa' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
+		$programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
 	}
 	catch 
 	{ }
