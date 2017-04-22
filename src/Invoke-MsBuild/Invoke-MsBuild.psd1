@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.5.0'
+ModuleVersion = '2.5.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Added new BuildDuration TimeSpan property to the returned hash table that shows how long the build ran for.'
+        ReleaseNotes = '- Fix to find the "Program Files" location correctly on 32 bit windows without throwing an error.'
 
     } # End of PSData hashtable
 
