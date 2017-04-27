@@ -13,6 +13,7 @@ $THIS_SCRIPTS_DIRECTORY = Split-Path $script:MyInvocation.MyCommand.Path
 Import-Module -Name (Join-Path (Join-Path (Split-Path -Path $THIS_SCRIPTS_DIRECTORY -Parent) 'Invoke-MsBuild') 'Invoke-MsBuild.psm1') -Force
 
 $pathToGoodSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "Solution That Should Build Successfully\SolutionThatShouldBuildSuccessfully.sln")
+$pathToWarningSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "Solution That Should Build Successfully With Warnings\SolutionThatShouldBuildWithWarnings.sln")
 $pathToBrokenSolution = (Join-Path $THIS_SCRIPTS_DIRECTORY "Solution That Should Fail Build\SolutionThatShouldFailBuild.sln")
 $invalidPath = (Join-Path $THIS_SCRIPTS_DIRECTORY "invalid\path")
 
@@ -21,6 +22,9 @@ $testNumber = 0
 Write-Host ("{0}. Build solution..." -f ++$testNumber)
 $buildResult = (Invoke-MsBuild -Path $pathToGoodSolution)
 if ($buildResult.BuildSucceeded -eq $true) { Write-Host ("Passed in {0:N1} seconds" -f $buildResult.BuildDuration.TotalSeconds) } else { throw "Test $testNumber failed." }
+
+Write-Host ("{0}. Build solution with warnings..." -f ++$testNumber)
+if ((Invoke-MsBuild -Path $pathToWarningSolution).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
 Write-Host ("{0}. Build solution using 32-bit MsBuild..." -f ++$testNumber)
 if ((Invoke-MsBuild -Path $pathToGoodSolution -Use32BitMsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
