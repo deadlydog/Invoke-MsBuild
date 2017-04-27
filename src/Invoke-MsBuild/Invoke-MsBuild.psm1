@@ -437,8 +437,10 @@ function Invoke-MsBuild
 			return $result
 		}
 
-		# Get if the build failed or not by looking at the log file.
-		$buildSucceeded = (((Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null) -and $result.MsBuildProcess.ExitCode -eq 0)
+		# Get if the build succeeded or not.
+		[bool] $buildOutputDoesNotContainFailureMessage = (Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null
+		[bool] $buildReturnedSuccessfulExitCode = $result.MsBuildProcess.ExitCode -eq 0
+		$buildSucceeded = $buildOutputDoesNotContainFailureMessage -and $buildReturnedSuccessfulExitCode
 
 		# If the build succeeded.
 		if ($buildSucceeded)
