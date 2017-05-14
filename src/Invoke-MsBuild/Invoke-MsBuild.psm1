@@ -77,6 +77,9 @@ function Invoke-MsBuild
 	If you installed Visual Studio in a non-standard location, or want to force the use of an older Visual Studio Command Prompt version, you may pass in the file path to
 	the Visual Studio Command Prompt to use. The filename is typically VsDevCmd.bat.
 
+	.PARAMETER IgnoreVisualStudioDeveloperCommandPrompt
+	This switch will ignore the VsDevCmd.bat file, even if overridden by VisualStudioDeveloperCommandPromptFilePath .
+
 	.PARAMETER PassThru
 	If set, this switch will cause the calling script not to wait until the build (launched in another process) completes before continuing execution.
 	Instead the build will be started in a new process and that process will immediately be returned, allowing the calling script to continue
@@ -258,6 +261,9 @@ function Invoke-MsBuild
 		[ValidateScript({Test-Path $_})]
 		[string] $VisualStudioDeveloperCommandPromptFilePath,
 
+		[parameter(Mandatory=$false)]
+		[switch] $IgnoreVisualStudioDeveloperCommandPrompt,
+
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
 
@@ -340,24 +346,29 @@ function Invoke-MsBuild
 				$msBuildPath = Get-LatestMsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
 			}
 
-			# Get the path to the Visual Studio Developer Command Prompt file.
-			$vsCommandPromptPath = $VisualStudioDeveloperCommandPromptFilePath
-			[bool] $vsCommandPromptPathWasNotProvided = [string]::IsNullOrEmpty($vsCommandPromptPath)
-			if ($vsCommandPromptPathWasNotProvided)
+			if([bool]$IgnoreVisualStudioDeveloperCommandPrompt)
 			{
-				$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
-			}
+					$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
+			} else {
+				# Get the path to the Visual Studio Developer Command Prompt file.
+				$vsCommandPromptPath = $VisualStudioDeveloperCommandPromptFilePath
+				[bool] $vsCommandPromptPathWasNotProvided = [string]::IsNullOrEmpty($vsCommandPromptPath)
+				if ($vsCommandPromptPathWasNotProvided)
+				{
+					$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
+				}
 
-			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
-			[bool] $vsCommandPromptPathWasFound = ![string]::IsNullOrEmpty($vsCommandPromptPath)
-			if ($vsCommandPromptPathWasFound)
-			{
-				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPromptPath"" & ""$msBuildPath"" "
-			}
-			# Else the VS Command Prompt was not found, so just build using MsBuild directly.
-			else
-			{
-				$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
+				# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
+				[bool] $vsCommandPromptPathWasFound = ![string]::IsNullOrEmpty($vsCommandPromptPath)
+				if ($vsCommandPromptPathWasFound)
+				{
+					$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPromptPath"" & ""$msBuildPath"" "
+				}
+				# Else the VS Command Prompt was not found, so just build using MsBuild directly.
+				else
+				{
+					$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
+				}
 			}
 
 			# Append the MsBuild arguments to pass into cmd.exe in order to do the build.
