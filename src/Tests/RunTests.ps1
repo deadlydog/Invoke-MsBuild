@@ -29,6 +29,9 @@ if ((Invoke-MsBuild -Path $pathToWarningSolution).BuildSucceeded -eq $true) { Wr
 Write-Host ("{0}. Build solution using 32-bit MsBuild..." -f ++$testNumber)
 if ((Invoke-MsBuild -Path $pathToGoodSolution -Use32BitMsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 
+Write-Host ("{0}. Build solution witout using the VS Developer Command Prompt..." -f ++$testNumber)
+if ((Invoke-MsBuild -Path $pathToGoodSolution -BypassVisualStudioDeveloperCommandPrompt).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
+
 Write-Host ("{0}. Build solution via piping..." -f ++$testNumber)
 if (($pathToGoodSolution | Invoke-MsBuild).BuildSucceeded -eq $true) { Write-Host "Passed" } else { throw "Test $testNumber failed." }
 

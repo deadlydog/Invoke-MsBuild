@@ -77,6 +77,11 @@ function Invoke-MsBuild
 	If you installed Visual Studio in a non-standard location, or want to force the use of an older Visual Studio Command Prompt version, you may pass in the file path to
 	the Visual Studio Command Prompt to use. The filename is typically VsDevCmd.bat.
 
+	.PARAMETER BypassVisualStudioDeveloperCommandPrompt
+	By default this script will locate and use the latest version of the Visual Studio Developer Command Prompt to run MsBuild.
+	The Visual Studio Developer Command Prompt loads additional variables and paths, so it is sometimes able to build project types that MsBuild cannot build by itself alone.
+	However, loading those additional variables and paths sometimes may have a performance impact, so this switch may be provided to bypass it and just use MsBuild directly.
+
 	.PARAMETER PassThru
 	If set, this switch will cause the calling script not to wait until the build (launched in another process) completes before continuing execution.
 	Instead the build will be started in a new process and that process will immediately be returned, allowing the calling script to continue
@@ -258,6 +263,9 @@ function Invoke-MsBuild
 		[ValidateScript({Test-Path $_})]
 		[string] $VisualStudioDeveloperCommandPromptFilePath,
 
+		[parameter(Mandatory=$false)]
+		[switch] $BypassVisualStudioDeveloperCommandPrompt,
+
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
 		[switch] $PassThru,
 
@@ -340,21 +348,27 @@ function Invoke-MsBuild
 				$msBuildPath = Get-LatestMsBuildPath -Use32BitMsBuild:$Use32BitMsBuild
 			}
 
-			# Get the path to the Visual Studio Developer Command Prompt file.
-			$vsCommandPromptPath = $VisualStudioDeveloperCommandPromptFilePath
-			[bool] $vsCommandPromptPathWasNotProvided = [string]::IsNullOrEmpty($vsCommandPromptPath)
-			if ($vsCommandPromptPathWasNotProvided)
+			# If we plan on trying to use the VS Command Prompt, we'll need to get the path to it.
+			[bool] $vsCommandPromptPathWasFound = $false
+			if (!$BypassVisualStudioDeveloperCommandPrompt)
 			{
-				$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
+				# Get the path to the Visual Studio Developer Command Prompt file.
+				$vsCommandPromptPath = $VisualStudioDeveloperCommandPromptFilePath
+				[bool] $vsCommandPromptPathWasNotProvided = [string]::IsNullOrEmpty($vsCommandPromptPath)
+				if ($vsCommandPromptPathWasNotProvided)
+				{
+					$vsCommandPromptPath = Get-LatestVisualStudioCommandPromptPath
+				}
+				$vsCommandPromptPathWasFound = ![string]::IsNullOrEmpty($vsCommandPromptPath)
 			}
 
-			# If a VS Command Prompt was found, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
-			[bool] $vsCommandPromptPathWasFound = ![string]::IsNullOrEmpty($vsCommandPromptPath)
-			if ($vsCommandPromptPathWasFound)
+			# If we should use the VS Command Prompt, call MsBuild from that since it sets environmental variables that may be needed to build some projects types (e.g. XNA).
+			$useVsCommandPrompt = !$BypassVisualStudioDeveloperCommandPrompt -and $vsCommandPromptPathWasFound
+			if ($useVsCommandPrompt)
 			{
 				$cmdArgumentsToRunMsBuild = "/k "" ""$vsCommandPromptPath"" & ""$msBuildPath"" "
 			}
-			# Else the VS Command Prompt was not found, so just build using MsBuild directly.
+			# Else we won't be using the VS Command Prompt, so just build using MsBuild directly.
 			else
 			{
 				$cmdArgumentsToRunMsBuild = "/k "" ""$msBuildPath"" "
