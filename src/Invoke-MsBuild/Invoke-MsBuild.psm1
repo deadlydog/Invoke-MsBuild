@@ -214,7 +214,7 @@ function Invoke-MsBuild
 	param
 	(
 		[parameter(Position=0,Mandatory=$true,ValueFromPipeline=$true,HelpMessage="The path to the file to build with MsBuild (e.g. a .sln or .csproj file).")]
-		[ValidateScript({Test-Path $_})]
+		[ValidateScript({Test-Path -Path $_ -PathType Leaf})]
 		[string] $Path,
 
 		[parameter(Mandatory=$false)]
@@ -256,11 +256,11 @@ function Invoke-MsBuild
 		[switch] $PromptForInputBeforeClosing,
 
 		[parameter(Mandatory=$false)]
-		[ValidateScript({Test-Path $_})]
+		[ValidateScript({Test-Path -Path $_ -PathType Leaf})]
 		[string] $MsBuildFilePath,
 
 		[parameter(Mandatory=$false)]
-		[ValidateScript({Test-Path $_})]
+		[ValidateScript({Test-Path -Path $_ -PathType Leaf})]
 		[string] $VisualStudioDeveloperCommandPromptFilePath,
 
 		[parameter(Mandatory=$false)]
