@@ -304,7 +304,7 @@ function Invoke-MsBuild
 		# Local Variables.
 		$solutionFileName = (Get-ItemProperty -Path $Path).Name
 		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
-		$buildErrorsLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbulid.errors.log"
+		$buildErrorsLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.errors.log"
 		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
 
 		# Build our hash table that will be returned.
