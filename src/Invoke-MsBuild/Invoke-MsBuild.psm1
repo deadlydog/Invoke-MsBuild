@@ -214,7 +214,7 @@ function Invoke-MsBuild
 	param
 	(
 		[parameter(Position=0,Mandatory=$true,ValueFromPipeline=$true,HelpMessage="The path to the file to build with MsBuild (e.g. a .sln or .csproj file).")]
-		[ValidateScript({Test-Path -Path $_ -PathType Leaf})]
+		[ValidateScript({Test-Path -LiteralPath $_ -PathType Leaf})]
 		[string] $Path,
 
 		[parameter(Mandatory=$false)]
@@ -302,7 +302,7 @@ function Invoke-MsBuild
 		$BuildLogDirectoryPath = [System.IO.Path]::GetFullPath($BuildLogDirectoryPath)
 
 		# Local Variables.
-		$solutionFileName = (Get-ItemProperty -Path $Path).Name
+		$solutionFileName = (Get-ItemProperty -LiteralPath $Path).Name
 		$buildLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.log"
 		$buildErrorsLogFilePath = (Join-Path -Path $BuildLogDirectoryPath -ChildPath $solutionFileName) + ".msbuild.errors.log"
 		$windowStyleOfNewWindow = if ($ShowBuildOutputInNewWindow) { "Normal" } else { "Hidden" }
@@ -442,7 +442,7 @@ function Invoke-MsBuild
 		}
 
 		# If we can't find the build's log file in order to inspect it, write a warning and return null.
-		if (!(Test-Path -Path $buildLogFilePath))
+		if (!(Test-Path -LiteralPath $buildLogFilePath))
 		{
 			$result.BuildSucceeded = $null
 			$result.Message = "Cannot find the build log file at '$buildLogFilePath', so unable to determine if build succeeded or not."
