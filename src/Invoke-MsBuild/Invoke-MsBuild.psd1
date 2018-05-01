@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.6.0'
+ModuleVersion = '2.6.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,8 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Added a BypassVisualStudioDeveloperCommandPrompt parameter to allow the Visual Studio Developer Command Prompt to be bypassed, as it can sometimes take a long time to load, leading to a performance problem.
-- Improved the file path validations performed on the scripts parameters.'
+        ReleaseNotes = '- Use `-LiteralPath` parameter for cmdlets to properly support file paths with symbols properly (e.g. square brackets in file paths)'
 
     } # End of PSData hashtable
 
