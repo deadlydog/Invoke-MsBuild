@@ -256,11 +256,11 @@ function Invoke-MsBuild
 		[switch] $PromptForInputBeforeClosing,
 
 		[parameter(Mandatory=$false)]
-		[ValidateScript({Test-Path -Path $_ -PathType Leaf})]
+		[ValidateScript({Test-Path -LiteralPath $_ -PathType Leaf})]
 		[string] $MsBuildFilePath,
 
 		[parameter(Mandatory=$false)]
-		[ValidateScript({Test-Path -Path $_ -PathType Leaf})]
+		[ValidateScript({Test-Path -LiteralPath $_ -PathType Leaf})]
 		[string] $VisualStudioDeveloperCommandPromptFilePath,
 
 		[parameter(Mandatory=$false)]
@@ -442,7 +442,7 @@ function Invoke-MsBuild
 		}
 
 		# If we can't find the build's log file in order to inspect it, write a warning and return null.
-		if (!(Test-Path -LiteralPath $buildLogFilePath))
+		if (!(Test-Path -LiteralPath $buildLogFilePath -PathType Leaf))
 		{
 			$result.BuildSucceeded = $null
 			$result.Message = "Cannot find the build log file at '$buildLogFilePath', so unable to determine if build succeeded or not."
@@ -464,8 +464,8 @@ function Invoke-MsBuild
 			# If we shouldn't keep the log files around, delete them.
 			if (!$KeepBuildLogOnSuccessfulBuilds)
 			{
-				if (Test-Path $buildLogFilePath -PathType Leaf) { Remove-Item -Path $buildLogFilePath -Force }
-				if (Test-Path $buildErrorsLogFilePath -PathType Leaf) { Remove-Item -Path $buildErrorsLogFilePath -Force }
+				if (Test-Path -LiteralPath $buildLogFilePath -PathType Leaf) { Remove-Item -LiteralPath $buildLogFilePath -Force }
+				if (Test-Path -LiteralPath $buildErrorsLogFilePath -PathType Leaf) { Remove-Item -LiteralPath $buildErrorsLogFilePath -Force }
 			}
 		}
 		# Else at least one of the projects failed to build.
@@ -495,7 +495,7 @@ function Invoke-MsBuild
 
 function Open-BuildLogFileWithDefaultProgram([string]$FilePathToOpen, [ref]$Result)
 {
-	if (Test-Path -Path $FilePathToOpen -PathType Leaf)
+	if (Test-Path -LiteralPath $FilePathToOpen -PathType Leaf)
 	{
 		Start-Process -verb "Open" $FilePathToOpen
 	}
@@ -573,7 +573,7 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2015AndPrior
 	$newestVsCommandPromptPath = $null
 	foreach ($path in $potentialVsCommandPromptPaths)
 	{
-		[bool] $pathExists = (![string]::IsNullOrEmpty($path)) -and (Test-Path -Path $path -PathType Leaf)
+		[bool] $pathExists = (![string]::IsNullOrEmpty($path)) -and (Test-Path -LiteralPath $path -PathType Leaf)
 		if ($pathExists)
 		{
 			$newestVsCommandPromptPath = $path
@@ -610,7 +610,7 @@ function Get-LatestMsBuildPath([switch] $Use32BitMsBuild)
 		throw 'Could not determine where to find MsBuild.exe.'
 	}
 
-	[bool] $msBuildExistsAtThePathFound = (Test-Path $msBuildPath -PathType Leaf)
+	[bool] $msBuildExistsAtThePathFound = (Test-Path -LiteralPath $msBuildPath -PathType Leaf)
 	if(!$msBuildExistsAtThePathFound)
 	{
 		throw "MsBuild.exe does not exist at the expected path, '$msBuildPath'."
@@ -709,7 +709,7 @@ function Get-CommonVisualStudioDirectoryPath
 	}
 
 	# If we're on a 32-bit machine, we need to go straight after the "Program Files" directory.
-	if (!(Test-Path -Path $programFilesDirectory -PathType Container))
+	if (!(Test-Path -LiteralPath $programFilesDirectory -PathType Container))
 	{
 		try
 		{
@@ -728,7 +728,7 @@ function Get-CommonVisualStudioDirectoryPath
 
 	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
 
-	[bool] $visualStudioDirectoryPathExists = (Test-Path -Path $visualStudioDirectoryPath -PathType Container)
+	[bool] $visualStudioDirectoryPathExists = (Test-Path -LiteralPath $visualStudioDirectoryPath -PathType Container)
 	if (!$visualStudioDirectoryPathExists)
 	{
 		return $null
