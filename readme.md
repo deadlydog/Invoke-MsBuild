@@ -103,7 +103,7 @@ Builds the given C# project and displays the output from MsBuild in the current 
 ---
 
 ```PowerShell
-Invoke-MsBuild -Path "C:\MySolution.sln" -Params "/target:Clean;Build /property:Configuration=Release;Platform=x64;BuildInParallel=true /verbosity:Detailed /maxcpucount"
+Invoke-MsBuild -Path "C:\MySolution.sln" -MsBuildParameters "/target:Clean;Build /property:Configuration=Release;Platform=x64;BuildInParallel=true /verbosity:Detailed /maxcpucount"
 ```
 
 Cleans then Builds the given solution, specifying to build the project in parallel in the Release configuration for the x64 platform.
