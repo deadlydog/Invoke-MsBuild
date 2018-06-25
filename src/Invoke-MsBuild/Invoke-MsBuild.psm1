@@ -88,10 +88,6 @@ function Invoke-MsBuild
 	execution while the build is performed, and also to inspect the process to see when it completes.
 	NOTE: This switch cannot be used with the AutoLaunchBuildLogOnFailure, AutoLaunchBuildErrorsLogOnFailure, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
 
-	.PARAMETER WhatIf
-	If set, the build will not actually be performed.
-	Instead it will just return the result hash table containing the file paths that would be created if the build is performed with the same parameters.
-
 	.OUTPUTS
 	When the -PassThru switch is provided, the process being used to run MsBuild.exe is returned.
 	When the -PassThru switch is not provided, a hash table with the following properties is returned:
@@ -210,7 +206,7 @@ function Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
 	Version: 2.6.1
 #>
-	[CmdletBinding(DefaultParameterSetName="Wait")]
+	[CmdletBinding(SupportsShouldProcess, DefaultParameterSetName="Wait")]
 	param
 	(
 		[parameter(Position=0,Mandatory=$true,ValueFromPipeline=$true,HelpMessage="The path to the file to build with MsBuild (e.g. a .sln or .csproj file).")]
@@ -267,10 +263,7 @@ function Invoke-MsBuild
 		[switch] $BypassVisualStudioDeveloperCommandPrompt,
 
 		[parameter(Mandatory=$false,ParameterSetName="PassThru")]
-		[switch] $PassThru,
-
-		[parameter(Mandatory=$false)]
-		[switch] $WhatIf
+		[switch] $PassThru
 	)
 
 	BEGIN { }
@@ -391,7 +384,7 @@ function Invoke-MsBuild
 			$result.CommandUsedToBuild = "cmd.exe $cmdArgumentsToRunMsBuild"
 
 			# If we don't actually want to perform a build, return .
-			if ($WhatIf)
+			if (-not $pscmdlet.ShouldProcess($result.CommandUsedToBuild, "MSBuild"))
 			{
 				$result.BuildSucceeded = $null
 				$result.Message = "The '-WhatIf' switch was specified, so a build was not invoked."
