@@ -88,6 +88,10 @@ function Invoke-MsBuild
 	execution while the build is performed, and also to inspect the process to see when it completes.
 	NOTE: This switch cannot be used with the AutoLaunchBuildLogOnFailure, AutoLaunchBuildErrorsLogOnFailure, KeepBuildLogOnSuccessfulBuilds, or PromptForInputBeforeClosing switches.
 
+	.PARAMETER WhatIf
+	If set, the build will not actually be performed.
+	Instead it will just return the result hash table containing the file paths that would be created if the build is performed with the same parameters.
+
 	.OUTPUTS
 	When the -PassThru switch is provided, the process being used to run MsBuild.exe is returned.
 	When the -PassThru switch is not provided, a hash table with the following properties is returned:
@@ -383,8 +387,8 @@ function Invoke-MsBuild
 			# Record the exact command used to perform the build to make it easier to troubleshoot issues with builds.
 			$result.CommandUsedToBuild = "cmd.exe $cmdArgumentsToRunMsBuild"
 
-			# If we don't actually want to perform a build, return .
-			if (-not $pscmdlet.ShouldProcess($result.CommandUsedToBuild, "MSBuild"))
+			# If we don't actually want to perform a build (i.e. the -WhatIf parameter was specified), return the object without actually doing the build.
+			if (!($pscmdlet.ShouldProcess($result.ItemToBuildFilePath, 'MsBuild')))
 			{
 				$result.BuildSucceeded = $null
 				$result.Message = "The '-WhatIf' switch was specified, so a build was not invoked."
