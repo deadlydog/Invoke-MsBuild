@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.6.1'
+ModuleVersion = '2.6.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Use `-LiteralPath` parameter for cmdlets to properly support file paths with symbols properly (e.g. square brackets in file paths)'
+        ReleaseNotes = '- Use native -WhatIf parameter functionality.'
 
     } # End of PSData hashtable
 
