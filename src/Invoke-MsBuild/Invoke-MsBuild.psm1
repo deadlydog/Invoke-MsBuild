@@ -582,6 +582,19 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2015AndPrior
 	return $newestVsCommandPromptPath
 }
 
+function Get-LatestMsBuildPath_NotUsedYetButCouldBeIfNeeded
+{
+	[bool] $vsSetupExists = $null -ne (Get-Command Get-VSSetupInstance -ErrorAction SilentlyContinue)
+	if (!$vsSetupExists)
+	{
+		Write-Verbose "Importing the VSSetup module in order to determine TF.exe path..." -Verbose
+		Install-Module VSSetup -Scope CurrentUser -Force
+	}
+	[string] $visualStudioInstallationPath = (Get-VSSetupInstance | Select-VSSetupInstance -Latest -Require Microsoft.Component.MSBuild).InstallationPath
+	$msBuildExecutableFilePath = (Get-ChildItem $visualStudioInstallationPath -Recurse -Filter "MsBuild.exe" | Select-Object -First 1).FullName
+	return $msBuildExecutableFilePath
+}
+
 function Get-LatestMsBuildPath([switch] $Use32BitMsBuild)
 {
 <#
