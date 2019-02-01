@@ -331,12 +331,6 @@ function Invoke-MsBuild
 			# Build the arguments to pass to MsBuild.
 			$buildArguments = """$Path"" $MsBuildParameters /fileLoggerParameters:LogFile=""$buildLogFilePath""$verbosityLevel /fileLoggerParameters1:LogFile=""$buildErrorsLogFilePath"";errorsonly"
 
-			# If the user hasn't set the UseSharedCompilation mode explicitly, turn it off (it's on by default, but can cause MsBuild to hang for some reason).
-			if ($buildArguments -notlike '*UseSharedCompilation*')
-			{
-				$buildArguments += " /p:UseSharedCompilation=false " # prevent processes from hanging (Roslyn compiler?)
-			}
-
 			# Get the path to the MsBuild executable.
 			$msBuildPath = $MsBuildFilePath
 			[bool] $msBuildPathWasNotProvided = [string]::IsNullOrEmpty($msBuildPath)
@@ -415,12 +409,14 @@ function Invoke-MsBuild
 				{
 					if ($ShowBuildOutputInCurrentWindow)
 					{
-						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -Wait -PassThru
+						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -NoNewWindow -PassThru
 					}
 					else
 					{
-						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -Wait -PassThru
+						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -PassThru
 					}
+					
+					Wait-Process -InputObject $result.MsBuildProcess
 				}
 
 				# Perform the build and record how long it takes.
