@@ -46,7 +46,7 @@ elseif ($buildResult.BuildSucceeded -eq $false)
 {
 	Write-Output ("Build failed after {0:N1} seconds. Check the build log file '$($buildResult.BuildLogFilePath)' for errors." -f $buildResult.BuildDuration.TotalSeconds)
 }
-elseif ($buildResult.BuildSucceeded -eq $null)
+elseif ($null -eq $buildResult.BuildSucceeded)
 {
 	Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
 }

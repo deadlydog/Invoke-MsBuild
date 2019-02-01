@@ -116,7 +116,7 @@ function Invoke-MsBuild
 	{
 		Write-Output ("Build failed after {0:N1} seconds. Check the build log file '$($buildResult.BuildLogFilePath)' for errors." -f $buildResult.BuildDuration.TotalSeconds)
 	}
-	elseif ($buildResult.BuildSucceeded -eq $null)
+	elseif ($null -eq $buildResult.BuildSucceeded)
 	{
 		Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
 	}
@@ -415,7 +415,7 @@ function Invoke-MsBuild
 					{
 						$result.MsBuildProcess = Start-Process cmd.exe -ArgumentList $cmdArgumentsToRunMsBuild -WindowStyle $windowStyleOfNewWindow -PassThru
 					}
-					
+
 					Wait-Process -InputObject $result.MsBuildProcess
 				}
 
@@ -445,7 +445,7 @@ function Invoke-MsBuild
 		}
 
 		# Get if the build succeeded or not.
-		[bool] $buildOutputDoesNotContainFailureMessage = (Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch) -eq $null
+		[bool] $buildOutputDoesNotContainFailureMessage = $null -eq (Select-String -Path $buildLogFilePath -Pattern "Build FAILED." -SimpleMatch)
 		[bool] $buildReturnedSuccessfulExitCode = $result.MsBuildProcess.ExitCode -eq 0
 		$buildSucceeded = $buildOutputDoesNotContainFailureMessage -and $buildReturnedSuccessfulExitCode
 
@@ -539,7 +539,7 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 	$expectedVsCommandPromptPathWithWildcards = "$visualStudioDirectoryPath\*\*\Common7\Tools\VsDevCmd.bat"
 	$vsCommandPromptPathObjects = Get-Item -Path $expectedVsCommandPromptPathWithWildcards
 
-	[bool] $vsCommandPromptWasNotFound = ($vsCommandPromptPathObjects -eq $null) -or ($vsCommandPromptPathObjects.Length -eq 0)
+	[bool] $vsCommandPromptWasNotFound = ($null -eq $vsCommandPromptPathObjects) -or ($vsCommandPromptPathObjects.Length -eq 0)
 	if ($vsCommandPromptWasNotFound)
 	{
 		# Recurisvely search the entire Microsoft Visual Studio directory for the VS Command Prompt (slower, but will still work if MS changes folder structure).
@@ -646,7 +646,7 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 	$expected64bitPathWithWildcards = "$visualStudioDirectoryPath\*\*\MsBuild\*\Bin\amd64\MsBuild.exe"
 	$msBuildPathObjects = Get-Item -Path $expected32bitPathWithWildcards, $expected64bitPathWithWildcards
 
-	[bool] $msBuildWasNotFound = ($msBuildPathObjects -eq $null) -or ($msBuildPathObjects.Length -eq 0)
+	[bool] $msBuildWasNotFound = ($null -eq $msBuildPathObjects) -or ($msBuildPathObjects.Length -eq 0)
 	if ($msBuildWasNotFound)
 	{
 		# Recurisvely search the entire Microsoft Visual Studio directory for MsBuild (slower, but will still work if MS changes folder structure).

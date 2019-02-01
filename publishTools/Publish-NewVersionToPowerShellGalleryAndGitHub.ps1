@@ -50,7 +50,7 @@ $currentScriptVersionNumberLine = $currentScriptVersionNumberMatch.Value
 
 # Get the manifest's current version number.
 $currentManifestVersionNumberMatches = Select-String -Path $manifestFilePath -Pattern $manifestVersionNumberRegexPattern | Select-Object -First 1
-if ($currentManifestVersionNumberMatches.Matches.Count -le 0 -or !$currentManifestVersionNumberMatches.Matches[0].Success) 
+if ($currentManifestVersionNumberMatches.Matches.Count -le 0 -or !$currentManifestVersionNumberMatches.Matches[0].Success)
 { throw "Could not find the manifest's current version number." }
 $currentManifestVersionNumberMatch = $currentManifestVersionNumberMatches.Matches[0]
 $currentManifestVersionNumber = $currentManifestVersionNumberMatch.Groups['Version'].Value
@@ -60,7 +60,7 @@ $currentManifestVersionNumberLine = $currentManifestVersionNumberMatch.Value
 # We have to get the file contents first so that Select-String will search across multiple lines, since the release notes may span multiple lines.
 $manifestFileContents = Get-Content -Path $manifestFilePath -Raw
 $currentManifestReleaseNotesMatches = Select-String -InputObject $manifestFileContents -Pattern $manifestReleaseNotesRegexPattern | Select-Object -First 1
-if ($currentManifestReleaseNotesMatches.Matches.Count -le 0 -or !$currentManifestReleaseNotesMatches.Matches[0].Success) 
+if ($currentManifestReleaseNotesMatches.Matches.Count -le 0 -or !$currentManifestReleaseNotesMatches.Matches[0].Success)
 { throw "Could not find the manifests's current release notes." }
 $currentManifestReleaseNotesMatch = $currentManifestReleaseNotesMatches.Matches[0]
 $currentManifestReleaseNotes = $currentManifestReleaseNotesMatch.Groups['ReleaseNotes'].Value
@@ -81,9 +81,9 @@ $newVersionNumber = $newVersionNumber.Trim()
 
 # Prompt for the release notes for this version.
 $newReleaseNotes = Read-MultiLineInputBoxDialog -WindowTitle 'Release Notes' -Message 'What release notes should be included with this version?' -DefaultText $currentManifestReleaseNotes
-if ($newReleaseNotes -eq $null) { throw 'You cancelled out of the release notes prompt.' }
-if ($newReleaseNotes.Contains("'")) 
-{ 
+if ($null -eq $newReleaseNotes) { throw 'You cancelled out of the release notes prompt.' }
+if ($newReleaseNotes.Contains("'"))
+{
 	$errorMessage = 'Single quotes are not allowed in the Release Notes, as they break our ability to parse them with PowerShell. Exiting script.'
 	Read-MessageBoxDialog -Message $errorMessage -WindowTitle 'Single Quotes Not Allowed In Release Notes'
 	throw $errorMessage
@@ -105,7 +105,7 @@ Publish-ToPowerShellGallery -moduleDirectoryPath $moduleDirectoryPath -powerShel
 Read-MessageBoxDialog -WindowTitle "Commit and push changes to GitHub" -Message "Please commit the changes made by this script and push them to GitHub. This will ensure that the GitHub Release about to be created places the Tag on the correct (latest) commit. Click the OK button once that is done." -Buttons OK > $null
 
 $versionNumberIsAPreReleaseVersion = $newVersionNumber -match '-+|[a-zA-Z]+' # (e.g. 1.2.3-alpha). i.e. contains a dash or letters.
-$gitHubReleaseParameters = 
+$gitHubReleaseParameters =
 @{
 	GitHubUsername = $gitHubUsername
 	GitHubRepositoryName = $gitHubRepositoryName
