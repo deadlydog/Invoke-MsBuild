@@ -629,7 +629,7 @@ function Get-LatestMsBuildPath([switch] $Use32BitMsBuild)
 	return $msBuildPath
 }
 
-function Get-MsBuildPathForVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
+function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 {
 	# Later we can probably make use of the VSSetup.PowerShell module to find the MsBuild.exe: https://github.com/Microsoft/vssetup.powershell
 	# Or perhaps the VsWhere.exe: https://github.com/Microsoft/vswhere
@@ -670,7 +670,7 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([switch] $Use32BitMsBuild)
 	return $newest64BitMsBuildPath
 }
 
-function Get-MsBuildPathForVisualStudio2015AndPrior([switch] $Use32BitMsBuild)
+function Get-MsBuildPathForVisualStudio2015AndPrior([bool] $Use32BitMsBuild)
 {
 	$registryPathToMsBuildToolsVersions = 'HKLM:\SOFTWARE\Microsoft\MSBuild\ToolsVersions\'
 	if ($Use32BitMsBuild)
