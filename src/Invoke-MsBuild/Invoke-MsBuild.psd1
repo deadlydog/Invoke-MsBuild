@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.6.2'
+ModuleVersion = '2.6.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Use native -WhatIf parameter functionality.'
+        ReleaseNotes = '- Fix not handling 32-bit switch correctly'
 
     } # End of PSData hashtable
 
