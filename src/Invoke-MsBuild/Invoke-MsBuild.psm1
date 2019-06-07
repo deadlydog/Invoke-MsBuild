@@ -633,6 +633,8 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 	# Example of known locations:
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe" - 32 bit
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\amd64\MSBuild.exe" - 64 bit
+	#	"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\MSBuild.exe" -32 bit
+	#	"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\amd64\MSBuild.exe" - 64 bit
 
 	[string] $visualStudioDirectoryPath = Get-CommonVisualStudioDirectoryPath
 	[bool] $visualStudioDirectoryPathDoesNotExist = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
@@ -649,7 +651,7 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 	[bool] $msBuildWasNotFound = ($null -eq $msBuildPathObjects) -or ($msBuildPathObjects.Length -eq 0)
 	if ($msBuildWasNotFound)
 	{
-		# Recurisvely search the entire Microsoft Visual Studio directory for MsBuild (slower, but will still work if MS changes folder structure).
+		# Recursively search the entire Microsoft Visual Studio directory for MsBuild (slower, but will still work if MS changes folder structure).
 		Write-Verbose "MsBuild.exe was not found at an expected location. Searching more locations, but this will be a little slow."
 		$msBuildPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'MsBuild.exe' }
 	}
