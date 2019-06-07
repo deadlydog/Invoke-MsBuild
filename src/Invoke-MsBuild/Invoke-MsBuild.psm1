@@ -101,7 +101,7 @@ function Invoke-MsBuild
 	BuildErrorsLogFilePath = The path to the build's error log file.
 	ItemToBuildFilePath = The item that MsBuild ran against.
 	CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
-	Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
+	Message = A message describing any problems that were encountered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
 	MsBuildProcess = The process that was used to execute MsBuild.exe.
 	BuildDuration = The amount of time the build took to complete, represented as a TimeSpan.
 
@@ -129,7 +129,7 @@ function Invoke-MsBuild
 
 	while (!$process.HasExited)
 	{
-		Write-Host "Solution is still buildling..."
+		Write-Host "Solution is still building..."
 		Start-Sleep -Seconds 1
 	}
 
@@ -143,7 +143,7 @@ function Invoke-MsBuild
 		Write-Output "Build completed successfully."
 	}
 
-	Perfom the build against the file specified at $pathToSolution and checks it for success in a single line.
+	Perform the build against the file specified at $pathToSolution and checks it for success in a single line.
 
 	.EXAMPLE
 	Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -MsBuildParameters "/target:Clean;Build" -ShowBuildOutputInNewWindow
@@ -524,7 +524,7 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 {
 	# Later we can probably make use of the VSSetup.PowerShell module to find the MsBuild.exe: https://github.com/Microsoft/vssetup.powershell
 	# Or perhaps the VsWhere.exe: https://github.com/Microsoft/vswhere
-	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselve in known locations.
+	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselves in known locations.
 	# Example of known locations:
 	#	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
 
@@ -542,7 +542,7 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 	[bool] $vsCommandPromptWasNotFound = ($null -eq $vsCommandPromptPathObjects) -or ($vsCommandPromptPathObjects.Length -eq 0)
 	if ($vsCommandPromptWasNotFound)
 	{
-		# Recurisvely search the entire Microsoft Visual Studio directory for the VS Command Prompt (slower, but will still work if MS changes folder structure).
+		# Recursively search the entire Microsoft Visual Studio directory for the VS Command Prompt (slower, but will still work if MS changes folder structure).
 		Write-Verbose "The Visual Studio Command Prompt was not found at an expected location. Searching more locations, but this will be a little slow."
 		$vsCommandPromptPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'VsDevCmd.bat' }
 	}
@@ -629,7 +629,7 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 {
 	# Later we can probably make use of the VSSetup.PowerShell module to find the MsBuild.exe: https://github.com/Microsoft/vssetup.powershell
 	# Or perhaps the VsWhere.exe: https://github.com/Microsoft/vswhere
-	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselve in known locations.
+	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselves in known locations.
 	# Example of known locations:
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe" - 32 bit
 	# 	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\amd64\MSBuild.exe" - 64 bit
