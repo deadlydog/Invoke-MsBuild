@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.6.4'
+ModuleVersion = '2.6.5'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,7 +107,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = '- Fix hanging indefinitely when waiting for build process to complete.'
+        ReleaseNotes = '- Fix to properly obey the `AutoLaunchBuildErrorsLogOnFailure` parameter.'
 
     } # End of PSData hashtable
 
