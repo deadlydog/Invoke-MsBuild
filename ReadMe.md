@@ -40,15 +40,15 @@ $buildResult = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 
 if ($buildResult.BuildSucceeded -eq $true)
 {
-	Write-Output ("Build completed successfully in {0:N1} seconds." -f $buildResult.BuildDuration.TotalSeconds)
+  Write-Output ("Build completed successfully in {0:N1} seconds." -f $buildResult.BuildDuration.TotalSeconds)
 }
 elseif ($buildResult.BuildSucceeded -eq $false)
 {
-	Write-Output ("Build failed after {0:N1} seconds. Check the build log file '$($buildResult.BuildLogFilePath)' for errors." -f $buildResult.BuildDuration.TotalSeconds)
+  Write-Output ("Build failed after {0:N1} seconds. Check the build log file '$($buildResult.BuildLogFilePath)' for errors." -f $buildResult.BuildDuration.TotalSeconds)
 }
 elseif ($null -eq $buildResult.BuildSucceeded)
 {
-	Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
+  Write-Output "Unsure if build passed or failed: $($buildResult.Message)"
 }
 ```
 
@@ -62,8 +62,8 @@ $process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 
 while (!$process.HasExited)
 {
-	Write-Host "Solution is still building..."
-	Start-Sleep -Seconds 1
+  Write-Host "Solution is still building..."
+  Start-Sleep -Seconds 1
 }
 ```
 
@@ -76,11 +76,11 @@ You can check the process's HasExited property to check if the build has complet
 ```PowerShell
 if ((Invoke-MsBuild -Path $pathToSolution).BuildSucceeded -eq $true)
 {
-	Write-Output "Build completed successfully."
+  Write-Output "Build completed successfully."
 }
 ```
 
-Perfom the build against the file specified at $pathToSolution and checks it for success in a single line.
+Perform the build against the file specified at $pathToSolution and checks it for success in a single line.
 
 ---
 
@@ -94,7 +94,6 @@ A window displaying the output from MsBuild will be shown so the user can view t
 ---
 
 ```PowerShell
-.EXAMPLE
 Invoke-MsBuild -Path "C:\Some Folder\MyProject.csproj" -ShowBuildOutputInCurrentWindow
 ```
 
