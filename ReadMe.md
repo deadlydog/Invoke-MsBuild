@@ -173,3 +173,13 @@ For a full list of available parameters, check out the latest documentation in P
 [ReleasesPageUrl]:https://github.com/deadlydog/Invoke-MsBuild/releases
 [PowerShellGalleryPackageUrl]:https://www.powershellgallery.com/packages/Invoke-MsBuild/
 [DocumentationInSourceControlFileUrl]:https://github.com/deadlydog/Invoke-MsBuild/blob/master/src/Invoke-MsBuild/Invoke-MsBuild.psm1#L6
+
+## Changelog
+
+See what's changed in the application over time by viewing [the changelog](Changelog.md).
+
+## Donate
+
+Buy me some pancakes 🥞 for providing this PowerShell module open source and for free :)
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.me/deadlydogDan/5USD)
