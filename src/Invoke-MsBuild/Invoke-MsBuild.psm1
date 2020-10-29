@@ -56,9 +56,9 @@ function Invoke-MsBuild
 	By default the build output is not shown in any window.
 	NOTE: This switch will override the ShowBuildOutputInNewWindow switch.
 	NOTE: There is a problem with the -NoNewWindow parameter of the Start-Process cmdlet; this is used for the ShowBuildOutputInCurrentWindow switch.
-		  The bug is that in some PowerShell consoles, the build output is not directed back to the console calling this function, so nothing is displayed.
-		  To avoid the build process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running
-		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
+		The bug is that in some PowerShell consoles, the build output is not directed back to the console calling this function, so nothing is displayed.
+		To avoid the build process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running
+		in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
 
 	.PARAMETER PromptForInputBeforeClosing
 	If set, this switch will prompt the user for input after the build completes, and will not continue until the user presses a key.
@@ -66,7 +66,7 @@ function Invoke-MsBuild
 	NOTE: This switch cannot be used with the PassThru switch.
 	NOTE: The user will need to provide input before execution will return back to the calling script (so do not use this switch for automated builds).
 	NOTE: To avoid the build process from appearing to hang, PromptForInputBeforeClosing only has an effect with ShowBuildOutputInCurrentWindow when running
-		  in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
+		in the default "ConsoleHost" PowerShell console window, as we know it works properly with that console (it does not in other consoles like ISE, PowerGUI, etc.).
 
 	.PARAMETER MsBuildFilePath
 	By default this script will locate and use the latest version of MsBuild.exe on the machine.

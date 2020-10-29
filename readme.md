@@ -29,7 +29,7 @@ When the -PassThru switch is not provided, a hash table with the following prope
 * BuildErrorsLogFilePath = The path to the build's error log file.
 * ItemToBuildFilePath = The item that MsBuild ran against.
 * CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
-* Message = A message describing any problems that were encoutered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
+* Message = A message describing any problems that were encountered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
 * MsBuildProcess = The process that was used to execute MsBuild.exe.
 * BuildDuration = The amount of time the build took to complete, represented as a TimeSpan.
 
@@ -62,7 +62,7 @@ $process = Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln" -PassThru
 
 while (!$process.HasExited)
 {
-	Write-Host "Solution is still buildling..."
+	Write-Host "Solution is still building..."
 	Start-Sleep -Seconds 1
 }
 ```
@@ -169,7 +169,7 @@ Builds the given C# project, discarding the result object and not displaying its
 
 ## Full Documentation
 
-For a full list of available parameters, check out the latest documention in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFileUrl].
+For a full list of available parameters, check out the latest documentation in PowerShell by using `Get-Help Invoke-MsBuild -Full`, or just [look at the file in source control here][DocumentationInSourceControlFileUrl].
 
 [ReleasesPageUrl]:https://github.com/deadlydog/Invoke-MsBuild/releases
 [PowerShellGalleryPackageUrl]:https://www.powershellgallery.com/packages/Invoke-MsBuild/
