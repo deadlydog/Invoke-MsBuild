@@ -208,7 +208,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.6.4
+	Version: 2.6.5
 #>
 	[CmdletBinding(SupportsShouldProcess, DefaultParameterSetName="Wait")]
 	param
@@ -284,7 +284,7 @@ function Invoke-MsBuild
 
 		# Default the ParameterSet variables that may not have been set depending on which parameter set is being used. This is required for PowerShell v2.0 compatibility.
 		if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildLogOnFailure = $false }
-		if (!(Test-Path Variable:Private:AutoLaunchBuildLogOnFailure)) { $AutoLaunchBuildErrorsLogOnFailure = $false }
+		if (!(Test-Path Variable:Private:AutoLaunchBuildErrorsLogOnFailure)) { $AutoLaunchBuildErrorsLogOnFailure = $false }
 		if (!(Test-Path Variable:Private:KeepBuildLogOnSuccessfulBuilds)) { $KeepBuildLogOnSuccessfulBuilds = $false }
 		if (!(Test-Path Variable:Private:PromptForInputBeforeClosing)) { $PromptForInputBeforeClosing = $false }
 		if (!(Test-Path Variable:Private:PassThru)) { $PassThru = $false }
