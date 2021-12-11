@@ -681,6 +681,10 @@ function Get-MsBuildPathForVisualStudio2015AndPrior([bool] $Use32BitMsBuild)
 		}
 	}
 
+	# Backup the current culture and force using English US to ensure version numbers are in the expected format (e.g. 17.0).
+	$previousCulture = [System.Threading.Thread]::CurrentThread.CurrentCulture
+	[System.Threading.Thread]::CurrentThread.CurrentCulture = 'en-US'
+
 	# Get the path to the directory that the latest version of MsBuild is in.
 	$msBuildToolsVersionsStrings = Get-ChildItem -Path $registryPathToMsBuildToolsVersions | Where-Object { $_ -match '[0-9]+\.[0-9]' } | Select-Object -ExpandProperty PsChildName
 	$msBuildToolsVersions = @{}
@@ -689,6 +693,9 @@ function Get-MsBuildPathForVisualStudio2015AndPrior([bool] $Use32BitMsBuild)
 	$registryPathToMsBuildToolsLatestVersion = Join-Path -Path $registryPathToMsBuildToolsVersions -ChildPath ("{0:n1}" -f $largestMsBuildToolsVersion)
 	$msBuildToolsVersionsKeyToUse = Get-Item -Path $registryPathToMsBuildToolsLatestVersion
 	$msBuildDirectoryPath = $msBuildToolsVersionsKeyToUse | Get-ItemProperty -Name 'MSBuildToolsPath' | Select-Object -ExpandProperty 'MSBuildToolsPath'
+
+	# Restore the previous culture now that we're done comparing version numbers.
+	[System.Threading.Thread]::CurrentThread.CurrentCulture = $previousCulture
 
 	if(!$msBuildDirectoryPath)
 	{
