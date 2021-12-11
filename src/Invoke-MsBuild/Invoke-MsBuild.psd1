@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.7.0'
+ModuleVersion = '2.7.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -107,9 +107,9 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        ReleaseNotes = 'Features:
+        ReleaseNotes = 'Fixes:
 
-- Add support for 64-bit Visual Studio versions (e.g. VS 2022).'
+- Compare MSBuild version numbers in other languages correctly.'
 
     } # End of PSData hashtable
 

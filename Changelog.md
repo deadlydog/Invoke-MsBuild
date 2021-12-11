@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.7.1 - December 11, 2021
+
+Fixes:
+
+- Compare MSBuild version numbers in other languages correctly.
+
 ## v2.7.0 - December 11, 2021
 
 Features:
