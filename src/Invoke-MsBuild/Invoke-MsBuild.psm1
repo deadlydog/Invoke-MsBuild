@@ -208,7 +208,7 @@ function Invoke-MsBuild
 	.NOTES
 	Name:   Invoke-MsBuild
 	Author: Daniel Schroeder (originally based on the module at http://geekswithblogs.net/dwdii/archive/2011/05/27/part-2-automating-a-visual-studio-build-with-powershell.aspx)
-	Version: 2.6.5
+	Version: 2.7.0
 #>
 	[CmdletBinding(SupportsShouldProcess, DefaultParameterSetName="Wait")]
 	param
@@ -703,25 +703,28 @@ function Get-MsBuildPathForVisualStudio2015AndPrior([bool] $Use32BitMsBuild)
 
 function Get-CommonVisualStudioDirectoryPath
 {
+	# As of VS 2022 Visual Studio is 64-bit, so look in "Program Files" directory before "Program Files (x86)".
 	[string] $programFilesDirectory = $null
 	try
 	{
-		$programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
+		$programFilesDirectory = Get-Item 'Env:\ProgramFiles' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
 	}
 	catch
 	{ }
 
 	if ([string]::IsNullOrEmpty($programFilesDirectory))
 	{
-		$programFilesDirectory = 'C:\Program Files (x86)'
+		$programFilesDirectory = 'C:\Program Files'
 	}
 
-	# If we're on a 32-bit machine, we need to go straight after the "Program Files" directory.
-	if (!(Test-Path -LiteralPath $programFilesDirectory -PathType Container))
+	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
+	[bool] $visualStudioDirectoryPathExists = (Test-Path -LiteralPath $visualStudioDirectoryPath -PathType Container)
+	if (!$visualStudioDirectoryPathExists)
 	{
+		# Look for Visual Studio in "Program Files (x86)" directory.
 		try
 		{
-			$programFilesDirectory = Get-Item 'Env:\ProgramFiles' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
+			$programFilesDirectory = Get-Item 'Env:\ProgramFiles(x86)' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Value
 		}
 		catch
 		{
@@ -730,13 +733,12 @@ function Get-CommonVisualStudioDirectoryPath
 
 		if ([string]::IsNullOrEmpty($programFilesDirectory))
 		{
-			$programFilesDirectory = 'C:\Program Files'
+			$programFilesDirectory = 'C:\Program Files (x86)'
 		}
 	}
 
-	[string] $visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
-
-	[bool] $visualStudioDirectoryPathExists = (Test-Path -LiteralPath $visualStudioDirectoryPath -PathType Container)
+	$visualStudioDirectoryPath = Join-Path -Path $programFilesDirectory -ChildPath 'Microsoft Visual Studio'
+	$visualStudioDirectoryPathExists = (Test-Path -LiteralPath $visualStudioDirectoryPath -PathType Container)
 	if (!$visualStudioDirectoryPathExists)
 	{
 		return $null
