@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.7.2 - November 12, 2025
+
+Fixes:
+
+- Support default Visual Studio 2026 directory path when selecting latest MsBuild version.
+
 ## v2.7.1 - December 11, 2021
 
 Fixes:
