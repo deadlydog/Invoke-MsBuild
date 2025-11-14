@@ -12,7 +12,7 @@
 RootModule = 'Invoke-MsBuild.psm1'
 
 # Version number of this module.
-ModuleVersion = '2.7.2'
+ModuleVersion = '2.7.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -109,7 +109,8 @@ PrivateData = @{
         # ReleaseNotes of this module
         ReleaseNotes = 'Fixes:
 
-- Support default Visual Studio 2026 directory path when selecting latest MsBuild version.'
+- Find latest VsDevCmd.bat correctly when Visual Studio 2026 is installed.
+- Fix issue where if only a single Visual Studio instance is installed, an error is thrown when trying to find the latest MSBuild.exe file.'
 
     } # End of PSData hashtable
 
