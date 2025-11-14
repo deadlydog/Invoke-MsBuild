@@ -527,6 +527,10 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 	# But for now, to keep this script PowerShell 2.0 compatible and not rely on external executables, let's look for it ourselves in known locations.
 	# Example of known locations:
 	#	"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat"
+	#	"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools\VsDevCmd.bat"
+	#	"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat"
+	# Visual Studio 2026 (v18) location:
+	#	"C:\Program Files\Microsoft Visual Studio\18\Enterprise\Common7\Tools\VsDevCmd.bat"
 
 	[string] $visualStudioDirectoryPath = Get-CommonVisualStudioDirectoryPath
 	[bool] $visualStudioDirectoryPathDoesNotExist = [string]::IsNullOrEmpty($visualStudioDirectoryPath)
@@ -547,7 +551,16 @@ function Get-VisualStudioCommandPromptPathForVisualStudio2017AndNewer
 		$vsCommandPromptPathObjects = Get-ChildItem -Path $visualStudioDirectoryPath -Recurse | Where-Object { $_.Name -ieq 'VsDevCmd.bat' }
 	}
 
-	$vsCommandPromptPathObjectsSortedWithNewestVersionsFirst = $vsCommandPromptPathObjects | Sort-Object -Property FullName -Descending
+	# Visual Studio 2026 changed the directory path to use 2-digit version numbers (e.g. 18) instead of the 4-digit year versions (e.g. 2022).
+	# We want to prioritize the 2-digit version numbers over the 4-digit year versions, so add them sorted first.
+	[System.IO.FileInfo[]] $vsCommandPromptPathObjectsSortedWithNewestVersionsFirst = $vsCommandPromptPathObjects |
+		Where-Object { $_.FullName -match '\\\d\d\\' } |
+		Sort-Object -Property FullName -Descending
+
+	# Then add the sorted non-2-digit versions (i.e. the 4-digit year versions).
+	$vsCommandPromptPathObjectsSortedWithNewestVersionsFirst += $vsCommandPromptPathObjects |
+		Where-Object { $_.FullName -notmatch '\\\d\d\\' } |
+		Sort-Object -Property FullName -Descending
 
 	$newestVsCommandPromptPath = $vsCommandPromptPathObjectsSortedWithNewestVersionsFirst | Select-Object -ExpandProperty FullName -First 1
 	return $newestVsCommandPromptPath
@@ -637,7 +650,7 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 	#	"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\amd64\MSBuild.exe" - 64 bit
 	#	"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe" - 32 bit
 	#	"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\amd64\MSBuild.exe" - 64 bit
-	# VS 2026 (v18) locations:
+	# Visual Studio 2026 (v18) locations:
 	#	"C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\MSBuild.exe" - 32 bit
 	#	"C:\Program Files\Microsoft Visual Studio\18\Enterprise\MSBuild\Current\Bin\amd64\MSBuild.exe" - 64 bit
 
@@ -663,7 +676,7 @@ function Get-MsBuildPathForVisualStudio2017AndNewer([bool] $Use32BitMsBuild)
 
 	# Visual Studio 2026 changed the directory path to use 2-digit version numbers (e.g. 18) instead of the 4-digit year versions (e.g. 2022).
 	# We want to prioritize the 2-digit version numbers over the 4-digit year versions, so add them sorted first.
-	$msBuildPathObjectsSortedWithNewestVersionsFirst = $msBuildPathObjects |
+	[System.IO.FileInfo[]] $msBuildPathObjectsSortedWithNewestVersionsFirst = $msBuildPathObjects |
 		Where-Object { $_.FullName -match '\\\d\d\\' } |
 		Sort-Object -Property FullName -Descending
 
