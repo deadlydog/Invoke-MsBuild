@@ -2,10 +2,10 @@
 
 A PowerShell module to make building projects and solutions with MsBuild easy. It provides features such as:
 
-* Check if the build succeeded or failed
-* Automatically open the build log file when the build fails
-* View the build output in the current console window, a new window, or not at all
-* Fire-and-forget building (via the -PassThru switch)
+- Check if the build succeeded or failed
+- Automatically open the build log file when the build fails
+- View the build output in the current console window, a new window, or not at all
+- Fire-and-forget building (via the -PassThru switch)
 
 The module simply passes through any MsBuild command-line parameters you supply, so it supports all functionality (e.g. project types, targets, etc.) that you would get by calling MsBuild directly. The module builds using the Visual Studio Command Prompt when available in order to support more project types that MsBuild.exe alone may not support, such as XNA projects.
 
@@ -13,10 +13,10 @@ The module simply passes through any MsBuild command-line parameters you supply,
 
 You can either download the `Invoke-MsBuild.psm1` file from the [Releases page][ReleasesPageUrl] directly, or [install the module from the PowerShell Gallery][PowerShellGalleryPackageUrl].
 
-Here is an example of how to import the Invoke-MsBuild module into your powershell session and call it:
+Here is an example of how to install the Invoke-MsBuild module from the PowerShell Gallery and call it:
 
 ```PowerShell
-Import-Module -Name "C:\PathTo\Invoke-MsBuild.psm1"
+Install-Module -Name Invoke-MsBuild -Scope CurrentUser
 Invoke-MsBuild -Path "C:\Some Folder\MySolution.sln"
 ```
 
@@ -24,14 +24,14 @@ When the -PassThru switch is provided, the process being used to run MsBuild.exe
 
 When the -PassThru switch is not provided, a hash table with the following properties is returned:
 
-* BuildSucceeded = $true if the build passed, $false if the build failed, and $null if we are not sure.
-* BuildLogFilePath = The path to the build's log file.
-* BuildErrorsLogFilePath = The path to the build's error log file.
-* ItemToBuildFilePath = The item that MsBuild ran against.
-* CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters are passed to MsBuild.exe.
-* Message = A message describing any problems that were encountered by Invoke-MsBuild. This is typically an empty string unless something went wrong.
-* MsBuildProcess = The process that was used to execute MsBuild.exe.
-* BuildDuration = The amount of time the build took to complete, represented as a TimeSpan.
+- BuildSucceeded = $true if the build passed, $false if the build failed, and $null if we are not sure.
+- BuildLogFilePath = The path to the build's log file.
+- BuildErrorsLogFilePath = The path to the build's error log file.
+- ItemToBuildFilePath = The item that MsBuild ran against.
+- CommandUsedToBuild = The full command that was used to invoke MsBuild. This can be useful for inspecting what parameters -re passed to MsBuild.exe.
+- Message = A message describing any problems that were encountered by Invoke-MsBuild. This is typically an empty string -nless something went wrong.
+- MsBuildProcess = The process that was used to execute MsBuild.exe.
+- BuildDuration = The amount of time the build took to complete, represented as a TimeSpan.
 
 ## Examples
 
